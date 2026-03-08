@@ -32,6 +32,7 @@ export default function HazardsScreen() {
   const [search, setSearch] = useState<string>('');
   const [filter, setFilter] = useState<HazardFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('name');
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const filteredHazards = useMemo(() => {
     let result = hazards;
@@ -222,8 +223,15 @@ export default function HazardsScreen() {
         keyboardDismissMode="on-drag"
         refreshControl={
           <RefreshControl
-            refreshing={isLoadingHazards}
-            onRefresh={refetchHazards}
+            refreshing={isRefreshing}
+            onRefresh={async () => {
+              setIsRefreshing(true);
+              try {
+                await refetchHazards();
+              } finally {
+                setIsRefreshing(false);
+              }
+            }}
             tintColor={colors.primary}
             colors={[colors.primary]}
           />

@@ -38,27 +38,30 @@ export const [FleetProvider, useFleet] = createContextHook(() => {
   const addTruck = useCallback((truck: Omit<FleetTruck, 'id' | 'createdAt' | 'color'>): FleetTruck => {
     const id = `truck_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const now = Date.now();
-    const currentTrucks = trucksPersisted.value;
-    const colorIndex = currentTrucks.length % TRUCK_COLORS.length;
-    const resolvedColor = TRUCK_COLORS[colorIndex];
-
-    const newTruck: FleetTruck = {
-      ...truck,
-      id,
-      color: resolvedColor,
-      createdAt: now,
-    };
+    let resolvedColor = TRUCK_COLORS[0];
 
     updateTrucks(prev => {
+      resolvedColor = TRUCK_COLORS[prev.length % TRUCK_COLORS.length];
+      const newTruck: FleetTruck = {
+        ...truck,
+        id,
+        color: resolvedColor,
+        createdAt: now,
+      };
       if (prev.length === 0) {
         setActiveValue(id);
       }
       return [...prev, newTruck];
     });
 
-    console.log('[Fleet] Truck added:', newTruck.id);
-    return newTruck;
-  }, [updateTrucks, setActiveValue, trucksPersisted.value]);
+    console.log('[Fleet] Truck added:', id);
+    return {
+      ...truck,
+      id,
+      color: resolvedColor,
+      createdAt: now,
+    };
+  }, [updateTrucks, setActiveValue]);
 
   const updateTruck = useCallback((id: string, updates: Partial<FleetTruck>) => {
     updateTrucks(prev => {

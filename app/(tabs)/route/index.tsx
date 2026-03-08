@@ -22,6 +22,7 @@ import {
 } from '@/services/routing';
 import { haversineDistance } from '@/utils/geo';
 import { getHazardColor } from '@/utils/hazards';
+import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
 import {
   speakInstruction,
   speakHazardWarning,
@@ -114,6 +115,10 @@ export default function RouteScreen() {
       hasSpokenEndRef.current = true;
       speakNavigationEnd();
     }
+
+    return () => {
+      stopSpeaking();
+    };
   }, [isNavigating, navProgress, voiceActive]);
 
   useEffect(() => {
@@ -372,6 +377,7 @@ export default function RouteScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <ScreenErrorBoundary screenName="Route" colors={colors}>
       {isNavigating && navProgress && routeResult ? (
         <RouteNavigationView
           colors={colors}
@@ -417,6 +423,7 @@ export default function RouteScreen() {
           getHazardColor={hazardColor}
         />
       )}
+      </ScreenErrorBoundary>
     </KeyboardAvoidingView>
   );
 }

@@ -163,7 +163,7 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     return (verificationsByHazard.get(hazardId) ?? []).some(v => v.userId === userId);
   }, [verificationsByHazard]);
 
-  return {
+  return useMemo(() => ({
     verifications: verificationsPersisted.value,
     reports: reportsPersisted.value,
     addVerification,
@@ -175,5 +175,17 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     getConfirmedCount,
     getDisputedCount,
     hasUserVerified,
-  };
+  }), [
+    verificationsPersisted.value,
+    reportsPersisted.value,
+    addVerification,
+    addReport,
+    upvoteReport,
+    getVerificationsForHazard,
+    getReportsForHazard,
+    getVerificationCount,
+    getConfirmedCount,
+    getDisputedCount,
+    hasUserVerified,
+  ]);
 });
