@@ -10,6 +10,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -360,9 +361,18 @@ export default function OnboardingScreen() {
             <ChevronRight size={20} color={colors.background} />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity testID="onboarding-finish-btn" style={[styles.finishBtn, finishMutation.isPending && { opacity: 0.7 }]} onPress={handleFinish} activeOpacity={0.8} disabled={finishMutation.isPending}>
-            <Text style={styles.finishBtnText}>Start Using App</Text>
-            <Navigation size={18} color={colors.background} />
+          <TouchableOpacity testID="onboarding-finish-btn" style={[styles.finishBtn, finishMutation.isPending && styles.finishBtnPending]} onPress={handleFinish} activeOpacity={0.8} disabled={finishMutation.isPending}>
+            {finishMutation.isPending ? (
+              <>
+                <ActivityIndicator size="small" color={colors.background} />
+                <Text style={styles.finishBtnText}>Setting up...</Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.finishBtnText}>Start Using App</Text>
+                <Navigation size={18} color={colors.background} />
+              </>
+            )}
           </TouchableOpacity>
         )}
       </View>
@@ -613,5 +623,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.background,
     fontSize: 16,
     fontWeight: '700' as const,
+  },
+  finishBtnPending: {
+    opacity: 0.8,
   },
 });

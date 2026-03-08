@@ -73,8 +73,12 @@ export async function geocodeAddress(query: string, signal?: AbortSignal): Promi
       latitude: parseFloat(item.lat),
       longitude: parseFloat(item.lon),
     }));
-  } catch (error) {
-    console.log('[Routing] Geocode error:', error);
+  } catch (error: any) {
+    if (error?.name === 'AbortError') {
+      console.log('[Routing] Geocode aborted');
+    } else {
+      console.log('[Routing] Geocode error:', error);
+    }
     return [];
   }
 }
@@ -150,8 +154,12 @@ export async function getRoute(
     }
 
     return parseOsrmResponse(await response.json());
-  } catch (error) {
-    console.log('[Routing] Route error:', error);
+  } catch (error: any) {
+    if (error?.name === 'AbortError') {
+      console.log('[Routing] Route request aborted');
+    } else {
+      console.log('[Routing] Route error:', error);
+    }
     return null;
   }
 }

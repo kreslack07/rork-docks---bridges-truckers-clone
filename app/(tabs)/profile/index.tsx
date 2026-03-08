@@ -98,6 +98,12 @@ export default function ProfileScreen() {
         )}
       </View>
 
+      <TruckForm
+        colors={colors}
+        profile={profile}
+        onSave={handleSaveProfile}
+      />
+
       <View style={styles.topActions}>
         <TouchableOpacity
           style={styles.topActionBtn}
@@ -237,12 +243,6 @@ export default function ProfileScreen() {
           ))}
         </View>
       )}
-
-      <TruckForm
-        colors={colors}
-        profile={profile}
-        onSave={handleSaveProfile}
-      />
 
       <View style={styles.infoCard}>
         <Info size={16} color={colors.textSecondary} />
