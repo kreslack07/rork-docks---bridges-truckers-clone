@@ -1,0 +1,243 @@
+import { RouteCoordinate, RouteStep, Hazard } from '@/types';
+import { haversineDistance } from '@/utils/geo';
+import { classifyHazards } from '@/utils/classify-hazards';
+
+const OSRM_ENDPOINTS = [
+  'https://router.project-osrm.org/route/v1/driving',
+  'https://routing.openstreetmap.de/routed-car/route/v1/driving',
+];
+const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org/search';
+
+let currentOsrmIndex = 0;
+let lastOsrmFailure = 0;
+const OSRM_COOLDOWN_MS = 30000;
+
+if (__DEV__) {
+  const g = globalThis as any;
+  if (g.__ROUTING_HOT_RESET__) {
+    resetRoutingState();
+  }
+  g.__ROUTING_HOT_RESET__ = true;
+}
+
+export function resetRoutingState(): void {
+  currentOsrmIndex = 0;
+  lastOsrmFailure = 0;
+  console.log('[Routing] State reset');
+}
+
+function getOsrmEndpoint(): string {
+  if (currentOsrmIndex !== 0 && Date.now() - lastOsrmFailure >= OSRM_COOLDOWN_MS) {
+    console.log('[Routing] Cooldown expired — recovering to primary endpoint');
+    currentOsrmIndex = 0;
+  }
+  return OSRM_ENDPOINTS[currentOsrmIndex];
+}
+
+export interface GeocodedPlace {
+  displayName: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface LiveRouteResult {
+  coordinates: RouteCoordinate[];
+  distance: number;
+  duration: number;
+  steps: RouteStep[];
+  summary: string;
+}
+
+export async function geocodeAddress(query: string, signal?: AbortSignal): Promise<GeocodedPlace[]> {
+  try {
+    const url = `${NOMINATIM_BASE}?q=${encodeURIComponent(query)}&format=json&countrycodes=au&limit=8&addressdetails=1`;
+    console.log('[Routing] Geocoding:', query);
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'TruckDockFinderAU/1.0',
+      },
+      signal,
+    });
+
+    if (!response.ok) {
+      console.log('[Routing] Geocode failed:', response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    console.log('[Routing] Geocode results:', data.length);
+
+    return data.map((item: any) => ({
+      displayName: item.display_name,
+      latitude: parseFloat(item.lat),
+      longitude: parseFloat(item.lon),
+    }));
+  } catch (error) {
+    console.log('[Routing] Geocode error:', error);
+    return [];
+  }
+}
+
+function buildRouteUrl(endpoint: string, origin: RouteCoordinate, destination: RouteCoordinate): string {
+  return `${endpoint}/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?overview=full&geometries=geojson&steps=true`;
+}
+
+function parseOsrmResponse(data: any): LiveRouteResult | null {
+  if (data.code !== 'Ok' || !data.routes?.length) {
+    console.log('[Routing] No routes found:', data.code);
+    return null;
+  }
+
+  const route = data.routes[0];
+  const coordinates: RouteCoordinate[] = route.geometry.coordinates.map(
+    (coord: [number, number]) => ({ latitude: coord[1], longitude: coord[0] }),
+  );
+  const steps: RouteStep[] = route.legs[0].steps.map((step: any) => ({
+    instruction: formatInstruction(step.maneuver, step.name),
+    distance: step.distance,
+    duration: step.duration,
+    maneuver: step.maneuver?.type ?? 'straight',
+  }));
+
+  console.log('[Routing] Route found:', {
+    distance: route.distance,
+    duration: route.duration,
+    steps: steps.length,
+    coords: coordinates.length,
+  });
+
+  return {
+    coordinates,
+    distance: route.distance,
+    duration: route.duration,
+    steps,
+    summary: route.legs[0]?.summary ?? '',
+  };
+}
+
+export async function getRoute(
+  origin: RouteCoordinate,
+  destination: RouteCoordinate,
+  signal?: AbortSignal,
+): Promise<LiveRouteResult | null> {
+  try {
+    const endpoint = getOsrmEndpoint();
+    const url = buildRouteUrl(endpoint, origin, destination);
+    console.log('[Routing] Fetching route via', endpoint);
+
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'DocksAndBridgesAU/1.0' },
+      signal,
+    });
+
+    if (!response.ok) {
+      console.log('[Routing] Route fetch failed:', response.status);
+      lastOsrmFailure = Date.now();
+
+      if (response.status === 429 || response.status === 503) {
+        currentOsrmIndex = (currentOsrmIndex + 1) % OSRM_ENDPOINTS.length;
+        console.log('[Routing] Switching to fallback OSRM endpoint');
+        const fallbackUrl = buildRouteUrl(getOsrmEndpoint(), origin, destination);
+        const fallbackResp = await fetch(fallbackUrl, {
+          headers: { 'User-Agent': 'DocksAndBridgesAU/1.0' },
+          signal,
+        });
+        if (!fallbackResp.ok) return null;
+        return parseOsrmResponse(await fallbackResp.json());
+      }
+      return null;
+    }
+
+    return parseOsrmResponse(await response.json());
+  } catch (error) {
+    console.log('[Routing] Route error:', error);
+    return null;
+  }
+}
+
+export function filterHazardsNearRoute(
+  routeCoords: RouteCoordinate[],
+  hazardsList: Hazard[],
+  proximityKm: number = 0.5,
+): Hazard[] {
+  const nearby: Hazard[] = [];
+  for (const hazard of hazardsList) {
+    const isNearRoute = routeCoords.some(
+      (coord) => haversineDistance(coord.latitude, coord.longitude, hazard.latitude, hazard.longitude) < proximityKm,
+    );
+    if (isNearRoute) {
+      nearby.push(hazard);
+    }
+  }
+  return nearby;
+}
+
+export function analyzeRouteHazards(
+  routeCoords: RouteCoordinate[],
+  truckHeight: number,
+  hazardsList: Hazard[],
+  proximityKm: number = 0.5,
+  truckWeight?: number,
+  truckWidth?: number,
+): { blockedHazards: Hazard[]; tightHazards: Hazard[]; safeHazards: Hazard[]; nearbyHazards: Hazard[] } {
+  const nearby = filterHazardsNearRoute(routeCoords, hazardsList, proximityKm);
+  const { blocked, tight, safe } = classifyHazards(nearby, truckHeight, truckWeight, truckWidth);
+
+  console.log('[Routing] Hazard analysis:', {
+    nearby: nearby.length,
+    blocked: blocked.length,
+    tight: tight.length,
+    safe: safe.length,
+  });
+
+  return { blockedHazards: blocked, tightHazards: tight, safeHazards: safe, nearbyHazards: nearby };
+}
+
+function formatInstruction(maneuver: any, streetName: string): string {
+  if (!maneuver) return `Continue on ${streetName || 'road'}`;
+
+  const type = maneuver.type;
+  const modifier = maneuver.modifier;
+  const name = streetName || 'the road';
+
+  switch (type) {
+    case 'depart':
+      return `Head ${modifier ?? 'forward'} on ${name}`;
+    case 'arrive':
+      return 'Arrive at your destination';
+    case 'turn':
+      return `Turn ${modifier ?? ''} onto ${name}`;
+    case 'merge':
+      return `Merge ${modifier ?? ''} onto ${name}`;
+    case 'fork':
+      return `Take the ${modifier ?? ''} fork onto ${name}`;
+    case 'roundabout':
+    case 'rotary':
+      return `At the roundabout, take exit onto ${name}`;
+    case 'new name':
+      return `Continue onto ${name}`;
+    case 'end of road':
+      return `Turn ${modifier ?? ''} onto ${name}`;
+    case 'continue':
+      return `Continue on ${name}`;
+    default:
+      return `Continue on ${name}`;
+  }
+}
+
+export function formatDistance(meters: number): string {
+  if (meters >= 1000) {
+    return `${(meters / 1000).toFixed(1)} km`;
+  }
+  return `${Math.round(meters)} m`;
+}
+
+export function formatDuration(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.round((seconds % 3600) / 60);
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes} min`;
+}
