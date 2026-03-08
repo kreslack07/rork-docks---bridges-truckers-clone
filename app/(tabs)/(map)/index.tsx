@@ -86,6 +86,19 @@ export default function MapScreen() {
   const { filter, filteredDocks, filteredHazards, cycleFilter, filterLabel, clearFilter } = useMapFilters(docks, hazards);
   const { activeRoute, routeHazards, isRouting, routeToDock, clearRoute, userLocation, getUserLocation } = useMapRouting(profile, hazards, mapRef);
 
+  const handleViewHazards = useCallback(() => {
+    router.push('/(tabs)/hazards');
+  }, [router]);
+
+  const handleReportHazard = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/report-hazard');
+  }, [router]);
+
+  const handleSearchPress = useCallback(() => {
+    router.push('/search');
+  }, [router]);
+
   const dismissVehiclePicker = useCallback(() => {
     if (showVehiclePicker) setShowVehiclePicker(false);
   }, [showVehiclePicker]);
@@ -99,7 +112,11 @@ export default function MapScreen() {
     setShowVehiclePicker(false);
   }, [updateProfile]);
 
-  const totalReports = docks.length + hazards.length;
+  const totalReports = useMemo(() => docks.length + hazards.length, [docks.length, hazards.length]);
+
+  const userName = useMemo(() => user?.displayName || profile.name || 'Truck Driver', [user?.displayName, profile.name]);
+  const hazardCount = hazards.length;
+  const isAuthenticated = !!user;
 
   const truckTypeLabel = useMemo(() => {
     const found = TRUCK_TYPES.find(t => t.value === profile.type);
@@ -362,11 +379,8 @@ export default function MapScreen() {
         colors={colors}
         totalReports={totalReports}
         insetBottom={insets.bottom}
-        onViewHazards={() => router.push('/(tabs)/hazards')}
-        onReportHazard={() => {
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          router.push('/report-hazard');
-        }}
+        onViewHazards={handleViewHazards}
+        onReportHazard={handleReportHazard}
       />
 
       <VehiclePicker
@@ -384,7 +398,7 @@ export default function MapScreen() {
         insetBottom={insets.bottom}
         isLoading={isLoading}
         isOffline={isOffline}
-        onSearchPress={() => router.push('/search')}
+        onSearchPress={handleSearchPress}
       />
 
       <MapDetailCard
@@ -407,11 +421,11 @@ export default function MapScreen() {
         drawerOpen={drawerOpen}
         drawerAnim={drawerAnim}
         insetTop={insets.top}
-        userName={user?.displayName || profile.name || 'Truck Driver'}
+        userName={userName}
         truckTypeLabel={truckTypeLabel}
         truckHeight={profile.height}
-        hazardCount={hazards.length}
-        isAuthenticated={!!user}
+        hazardCount={hazardCount}
+        isAuthenticated={isAuthenticated}
         onClose={closeDrawer}
       />
 

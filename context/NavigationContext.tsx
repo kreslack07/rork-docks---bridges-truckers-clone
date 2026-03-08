@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
 import { Hazard, RouteCoordinate } from '@/types';
@@ -274,7 +274,7 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
     setNavProgress(null);
   }, [isNavigating, stopNavigation]);
 
-  return {
+  return useMemo(() => ({
     liveRoute,
     isRouting: routeMutation.isPending,
     routeError: routeMutation.error?.message ?? null,
@@ -287,5 +287,18 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
     startNavigation,
     stopNavigation,
     isRerouting: isReroutePending,
-  };
+  }), [
+    liveRoute,
+    routeMutation.isPending,
+    routeMutation.error,
+    computeRoute,
+    clearRoute,
+    isNavigating,
+    livePosition,
+    navProgress,
+    rerouteCount,
+    startNavigation,
+    stopNavigation,
+    isReroutePending,
+  ]);
 });

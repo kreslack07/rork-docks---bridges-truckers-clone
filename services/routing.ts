@@ -161,9 +161,36 @@ export function filterHazardsNearRoute(
   hazardsList: Hazard[],
   proximityKm: number = 0.5,
 ): Hazard[] {
+  if (routeCoords.length === 0 || hazardsList.length === 0) return [];
+
+  const pad = proximityKm / 111;
+  let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
+  for (const c of routeCoords) {
+    if (c.latitude < minLat) minLat = c.latitude;
+    if (c.latitude > maxLat) maxLat = c.latitude;
+    if (c.longitude < minLon) minLon = c.longitude;
+    if (c.longitude > maxLon) maxLon = c.longitude;
+  }
+  minLat -= pad;
+  maxLat += pad;
+  minLon -= pad;
+  maxLon += pad;
+
+  const sampleStep = Math.max(1, Math.floor(routeCoords.length / 80));
+  const sampledCoords = sampleStep === 1
+    ? routeCoords
+    : routeCoords.filter((_, i) => i % sampleStep === 0 || i === routeCoords.length - 1);
+
   const nearby: Hazard[] = [];
   for (const hazard of hazardsList) {
-    const isNearRoute = routeCoords.some(
+    if (
+      hazard.latitude < minLat || hazard.latitude > maxLat ||
+      hazard.longitude < minLon || hazard.longitude > maxLon
+    ) {
+      continue;
+    }
+
+    const isNearRoute = sampledCoords.some(
       (coord) => haversineDistance(coord.latitude, coord.longitude, hazard.latitude, hazard.longitude) < proximityKm,
     );
     if (isNearRoute) {

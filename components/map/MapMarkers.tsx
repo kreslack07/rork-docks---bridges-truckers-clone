@@ -1,10 +1,20 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Marker } from 'react-native-maps';
 import { MapPin, AlertTriangle, Zap, Weight } from 'lucide-react-native';
 import { Dock, Hazard, TruckProfile } from '@/types';
 import { ThemeColors } from '@/constants/colors';
 import { getHazardColor } from '@/utils/hazards';
+
+let cachedColors: ThemeColors | null = null;
+let cachedStyles: ReturnType<typeof buildMarkerStyles> | null = null;
+
+function getSharedStyles(colors: ThemeColors) {
+  if (cachedColors === colors && cachedStyles) return cachedStyles;
+  cachedColors = colors;
+  cachedStyles = buildMarkerStyles(colors);
+  return cachedStyles;
+}
 
 interface DockMarkerProps {
   dock: Dock;
@@ -13,13 +23,14 @@ interface DockMarkerProps {
 }
 
 export const DockMarkerItem = memo(function DockMarkerItem({ dock, colors, onPress }: DockMarkerProps) {
-  const styles = useMemo(() => markerStyles(colors), [colors]);
+  const styles = getSharedStyles(colors);
+  const handlePress = useCallback(() => onPress(dock), [onPress, dock]);
   return (
     <Marker
       coordinate={{ latitude: dock.latitude, longitude: dock.longitude }}
       title={dock.name}
       description={dock.business}
-      onPress={() => onPress(dock)}
+      onPress={handlePress}
     >
       <View style={styles.dockMarker}>
         <MapPin size={14} color={colors.white} />
@@ -36,14 +47,21 @@ interface HazardMarkerProps {
 }
 
 export const HazardMarkerItem = memo(function HazardMarkerItem({ hazard, colors, profile, onPress }: HazardMarkerProps) {
-  const styles = useMemo(() => markerStyles(colors), [colors]);
+  const styles = getSharedStyles(colors);
   const hazardColor = useMemo(() => getHazardColor(hazard, profile, colors), [hazard, profile, colors]);
+  const handlePress = useCallback(() => onPress(hazard), [onPress, hazard]);
+  const description = useMemo(() => {
+    if (hazard.type === 'weight_limit') return `${hazard.weightLimit}t weight limit`;
+    if (hazard.clearanceHeight < 90) return `${hazard.clearanceHeight}m clearance`;
+    return 'Clearance unknown';
+  }, [hazard.type, hazard.weightLimit, hazard.clearanceHeight]);
+
   return (
     <Marker
       coordinate={{ latitude: hazard.latitude, longitude: hazard.longitude }}
       title={hazard.name}
-      description={hazard.type === 'weight_limit' ? `${hazard.weightLimit}t weight limit` : hazard.clearanceHeight < 90 ? `${hazard.clearanceHeight}m clearance` : 'Clearance unknown'}
-      onPress={() => onPress(hazard)}
+      description={description}
+      onPress={handlePress}
     >
       <View style={[styles.hazardMarker, { backgroundColor: hazardColor }]}>
         {hazard.type === 'weight_limit' ? (
@@ -58,7 +76,7 @@ export const HazardMarkerItem = memo(function HazardMarkerItem({ hazard, colors,
   );
 });
 
-const markerStyles = (colors: ThemeColors) => StyleSheet.create({
+const buildMarkerStyles = (colors: ThemeColors) => StyleSheet.create({
   dockMarker: {
     width: 28,
     height: 28,

@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation } from '@tanstack/react-query';
+
+const DEBOUNCE_MS = 300;
 
 interface UsePersistedQueryOptions<T> {
   key: string;
@@ -58,23 +60,39 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
       await AsyncStorage.setItem(key, serialize(newValue));
       return newValue;
     },
-    onSuccess: (data) => setValue(data),
   });
 
   const { mutate } = saveMutation;
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestValueRef = useRef<T>(value);
+  latestValueRef.current = value;
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const debouncedPersist = useCallback((newValue: T) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
+      mutate(newValue);
+    }, DEBOUNCE_MS);
+  }, [mutate]);
 
   const updateValue = useCallback((updater: (prev: T) => T) => {
     setValue(prev => {
       const updated = updater(prev);
-      mutate(updated);
+      debouncedPersist(updated);
       return updated;
     });
-  }, [mutate]);
+  }, [debouncedPersist]);
 
   const setAndPersist = useCallback((newValue: T) => {
     setValue(newValue);
-    mutate(newValue);
-  }, [mutate]);
+    debouncedPersist(newValue);
+  }, [debouncedPersist]);
 
   return {
     value,

@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+
 import createContextHook from '@nkzw/create-context-hook';
 import { usePersistedQuery } from '@/hooks/usePersistedQuery';
 
@@ -62,7 +63,7 @@ export const [FavouritesProvider, useFavourites] = createContextHook(() => {
 
   const favouriteCount = useMemo(() => favs.value.length, [favs.value]);
 
-  return {
+  return useMemo(() => ({
     favouriteDockIds: favs.value,
     recentRoutes: recents.value,
     toggleFavourite,
@@ -70,5 +71,13 @@ export const [FavouritesProvider, useFavourites] = createContextHook(() => {
     addRecentRoute,
     clearRecentRoutes,
     favouriteCount,
-  };
+  }), [
+    favs.value,
+    recents.value,
+    toggleFavourite,
+    isFavourite,
+    addRecentRoute,
+    clearRecentRoutes,
+    favouriteCount,
+  ]);
 });

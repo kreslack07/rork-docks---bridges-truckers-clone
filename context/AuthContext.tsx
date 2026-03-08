@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
@@ -48,7 +48,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   validateRef.current = validateSessionMutation;
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
         const token = await loadAuthToken();
         if (token) {
@@ -129,18 +129,48 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     onSuccess: () => setUser(null),
   });
 
-  return {
+  const signUp = useCallback(
+    (args: { email: string; password: string; displayName: string }) => signUpMutation.mutateAsync(args),
+    [signUpMutation],
+  );
+  const signIn = useCallback(
+    (args: { email: string; password: string }) => signInMutation.mutateAsync(args),
+    [signInMutation],
+  );
+  const signOut = useCallback(
+    () => signOutMutation.mutateAsync(),
+    [signOutMutation],
+  );
+  const deleteAccount = useCallback(
+    () => deleteAccountMutation.mutateAsync(),
+    [deleteAccountMutation],
+  );
+
+  return useMemo(() => ({
     user,
     isLoaded,
     isAuthenticated: !!user,
     isValidating,
-    signUp: signUpMutation.mutateAsync,
-    signIn: signInMutation.mutateAsync,
-    signOut: signOutMutation.mutateAsync,
-    deleteAccount: deleteAccountMutation.mutateAsync,
+    signUp,
+    signIn,
+    signOut,
+    deleteAccount,
     isDeletingAccount: deleteAccountMutation.isPending,
     isSigningUp: signUpMutation.isPending,
     isSigningIn: signInMutation.isPending,
     authError: signUpMutation.error?.message ?? signInMutation.error?.message ?? null,
-  };
+  }), [
+    user,
+    isLoaded,
+    isValidating,
+    signUp,
+    signIn,
+    signOut,
+    deleteAccount,
+    deleteAccountMutation.isPending,
+    signUpMutation.isPending,
+    signInMutation.isPending,
+    signUpMutation.error,
+    signInMutation.error,
+  ]);
 });

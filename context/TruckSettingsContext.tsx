@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import { TruckProfile } from '@/types';
 import { usePersistedQuery, usePersistedBoolQuery } from '@/hooks/usePersistedQuery';
@@ -48,7 +48,7 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
     setVoiceEnabled(!voicePersisted.value);
   }, [voicePersisted.value, setVoiceEnabled]);
 
-  return {
+  return useMemo(() => ({
     profile: profilePersisted.value,
     updateProfile,
     updateHeight,
@@ -57,7 +57,15 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
     isVoiceEnabled: voicePersisted.value,
     setVoiceEnabled,
     toggleVoice,
-  };
+  }), [
+    profilePersisted.value,
+    updateProfile,
+    updateHeight,
+    profilePersisted.isLoading,
+    voicePersisted.value,
+    setVoiceEnabled,
+    toggleVoice,
+  ]);
 });
 
 export function useTruckProfile() {
