@@ -8,51 +8,22 @@ import { fetchHazardsInArea } from '@/services/hazards-api';
 import { haversineDistance } from '@/utils/geo';
 import { isRateLimited } from '@/services/overpass-throttle';
 import { useToast } from '@/context/ToastContext';
+import { DOCKS as MOCK_DOCKS } from '@/mocks/docks';
+import { HAZARDS as MOCK_HAZARDS } from '@/mocks/hazards';
 
 
 const DEFAULT_LOCATION: RouteCoordinate = { latitude: -33.8688, longitude: 151.2093 };
 const CACHE_DOCKS_KEY = 'cached_docks';
 const CACHE_HAZARDS_KEY = 'cached_hazards';
 
-let mockDocksCache: Dock[] | null = null;
-let mockHazardsCache: Hazard[] | null = null;
-
-async function loadMockDocks(): Promise<Dock[]> {
-  if (mockDocksCache) return mockDocksCache;
-  try {
-    const { DOCKS } = await import('@/mocks/data');
-    mockDocksCache = DOCKS;
-    console.log('[LiveData] Mock docks loaded lazily:', DOCKS.length);
-    return DOCKS;
-  } catch (e) {
-    console.log('[LiveData] Failed to load mock docks:', e);
-    return [];
-  }
-}
-
-async function loadMockHazards(): Promise<Hazard[]> {
-  if (mockHazardsCache) return mockHazardsCache;
-  try {
-    const { HAZARDS } = await import('@/mocks/data');
-    mockHazardsCache = HAZARDS;
-    console.log('[LiveData] Mock hazards loaded lazily:', HAZARDS.length);
-    return HAZARDS;
-  } catch (e) {
-    console.log('[LiveData] Failed to load mock hazards:', e);
-    return [];
-  }
-}
-
-async function getMockDocksNear(lat: number, lon: number, radiusKm: number = 50): Promise<Dock[]> {
-  const mocks = await loadMockDocks();
-  return mocks.filter(
+function getMockDocksNear(lat: number, lon: number, radiusKm: number = 50): Dock[] {
+  return MOCK_DOCKS.filter(
     (d) => haversineDistance(lat, lon, d.latitude, d.longitude) < radiusKm,
   );
 }
 
-async function getMockHazardsNear(lat: number, lon: number, radiusKm: number = 80): Promise<Hazard[]> {
-  const mocks = await loadMockHazards();
-  return mocks.filter(
+function getMockHazardsNear(lat: number, lon: number, radiusKm: number = 80): Hazard[] {
+  return MOCK_HAZARDS.filter(
     (h) => haversineDistance(lat, lon, h.latitude, h.longitude) < radiusKm,
   );
 }
@@ -179,7 +150,7 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     queryKey: ['docks', lat, lon],
     queryFn: async ({ signal }) => {
       console.log('[LiveData] Fetching real docks near', lat.toFixed(3), lon.toFixed(3));
-      const mockDocks = await getMockDocksNear(lat, lon);
+      const mockDocks = getMockDocksNear(lat, lon);
 
       if (isRateLimited()) {
         console.log('[LiveData] API rate limited — returning mock docks only');
@@ -193,7 +164,6 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
           const merged = mergeWithMockData(realDocks, mockDocks);
           console.log('[LiveData] Merged docks: API', realDocks.length, '+ mock', mockDocks.length, '= total', merged.length);
           void saveCachedDocks(merged);
-          mockDocksCache = null;
           return merged;
         }
         console.log('[LiveData] No API docks returned, using mock fallback');
@@ -214,7 +184,7 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     queryKey: ['hazards', lat, lon],
     queryFn: async ({ signal }) => {
       console.log('[LiveData] Fetching real hazards near', lat.toFixed(3), lon.toFixed(3));
-      const mockHazards = await getMockHazardsNear(lat, lon);
+      const mockHazards = getMockHazardsNear(lat, lon);
 
       if (isRateLimited()) {
         console.log('[LiveData] API rate limited — returning mock hazards only');
@@ -228,7 +198,6 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
           const merged = mergeWithMockData(realHazards, mockHazards);
           console.log('[LiveData] Merged hazards: API', realHazards.length, '+ mock', mockHazards.length, '= total', merged.length);
           void saveCachedHazards(merged);
-          mockHazardsCache = null;
           return merged;
         }
         console.log('[LiveData] No API hazards returned, using mock fallback');
@@ -281,34 +250,30 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
 
     if (toastKey === 'offline') {
       console.log('[LiveData] Both queries failed — falling back to mock + cached data');
-      void getMockDocksNear(lat, lon).then((mockDocks) => {
-        if (mockDocks.length > 0) {
-          queryClient.setQueryData(['cachedDocks'], (prev: Dock[] | undefined) =>
-            prev && prev.length > 0 ? prev : mockDocks
-          );
-        }
-      });
-      void getMockHazardsNear(lat, lon).then((mockHazards) => {
-        if (mockHazards.length > 0) {
-          queryClient.setQueryData(['cachedHazards'], (prev: Hazard[] | undefined) =>
-            prev && prev.length > 0 ? prev : mockHazards
-          );
-        }
-      });
+      const mockDocks = getMockDocksNear(lat, lon);
+      if (mockDocks.length > 0) {
+        queryClient.setQueryData(['cachedDocks'], (prev: Dock[] | undefined) =>
+          prev && prev.length > 0 ? prev : mockDocks
+        );
+      }
+      const mockHazards = getMockHazardsNear(lat, lon);
+      if (mockHazards.length > 0) {
+        queryClient.setQueryData(['cachedHazards'], (prev: Hazard[] | undefined) =>
+          prev && prev.length > 0 ? prev : mockHazards
+        );
+      }
       showToastRef.current('warning', 'Offline Mode', 'Using cached & local data — check your connection');
     } else if (toastKey === 'docks-error') {
-      void getMockDocksNear(lat, lon).then((mockDocks) => {
-        if (mockDocks.length > 0 && allDocksRef.current.length === 0) {
-          queryClient.setQueryData(['cachedDocks'], mockDocks);
-        }
-      });
+      const fallbackDocks = getMockDocksNear(lat, lon);
+      if (fallbackDocks.length > 0 && allDocksRef.current.length === 0) {
+        queryClient.setQueryData(['cachedDocks'], fallbackDocks);
+      }
       showToastRef.current('warning', 'Limited Dock Data', 'Live data unavailable — showing known docks');
     } else if (toastKey === 'hazards-error') {
-      void getMockHazardsNear(lat, lon).then((mockHazards) => {
-        if (mockHazards.length > 0 && allHazardsRef.current.length === 0) {
-          queryClient.setQueryData(['cachedHazards'], mockHazards);
-        }
-      });
+      const fallbackHazards = getMockHazardsNear(lat, lon);
+      if (fallbackHazards.length > 0 && allHazardsRef.current.length === 0) {
+        queryClient.setQueryData(['cachedHazards'], fallbackHazards);
+      }
       showToastRef.current('warning', 'Limited Hazard Data', 'Live data unavailable — showing known hazards');
     }
   }, [docksQuery.error, hazardsQuery.error, lat, lon, queryClient]);

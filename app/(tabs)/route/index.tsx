@@ -186,6 +186,11 @@ export default function RouteScreen() {
     isNavigatingRef.current = isNavigating;
   }, [isNavigating]);
 
+  const stopNavigationRef = useRef(stopNavigation);
+  stopNavigationRef.current = stopNavigation;
+  const resetGeocodeRef = useRef(resetGeocode);
+  resetGeocodeRef.current = resetGeocode;
+
   useEffect(() => {
     return () => {
       if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -193,7 +198,7 @@ export default function RouteScreen() {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;
       }
-      resetGeocode();
+      resetGeocodeRef.current();
       try {
         stopSpeaking();
         resetVoiceState();
@@ -201,10 +206,10 @@ export default function RouteScreen() {
         console.log('[Route] Cleanup voice error:', error);
       }
       if (isNavigatingRef.current) {
-        stopNavigation();
+        stopNavigationRef.current();
       }
     };
-  }, [resetGeocode, stopNavigation]);
+  }, []);
 
   const handleSearchChange = useCallback((text: string) => {
     setDestination(text);
