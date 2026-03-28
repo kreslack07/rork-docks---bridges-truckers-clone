@@ -13,6 +13,7 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
+import { trpc } from '@/lib/trpc';
 import {
   AlertTriangle,
   Zap,
@@ -67,7 +68,7 @@ function ReportHazardScreenContent() {
               setLatStr(pos.coords.latitude.toFixed(6));
               setLonStr(pos.coords.longitude.toFixed(6));
               setIsLocating(false);
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             },
             () => {
               Alert.alert('Error', 'Could not get your location');
@@ -91,7 +92,7 @@ function ReportHazardScreenContent() {
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       setLatStr(loc.coords.latitude.toFixed(6));
       setLonStr(loc.coords.longitude.toFixed(6));
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {
       Alert.alert('Error', 'Could not get your location. Please enter manually.');
     } finally {
@@ -99,25 +100,28 @@ function ReportHazardScreenContent() {
     }
   }, []);
 
+  const reportMutation = trpc.hazards.report.useMutation();
+
   const submitMutation = useMutation({
     mutationFn: async () => {
       const payload = {
         type,
         name: name.trim(),
         road: road.trim(),
-        city: city.trim(),
-        state: state.trim(),
+        city: city.trim() || undefined,
+        state: state.trim() || undefined,
         clearanceHeight: parseFloat(heightStr),
         latitude: parseFloat(latStr),
         longitude: parseFloat(lonStr),
-        description: description.trim(),
+        description: description.trim() || undefined,
       };
-      console.log('[ReportHazard] Submitting:', payload);
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log('[ReportHazard] Submitting to backend:', payload);
+      const result = await reportMutation.mutateAsync(payload);
+      console.log('[ReportHazard] Backend response:', result);
       return { name: payload.name, road: payload.road };
     },
     onSuccess: (data) => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       addLocalNotification(
         'Hazard Report Submitted',
         `Your report for "${data.name}" on ${data.road} is being reviewed.`,
@@ -128,6 +132,10 @@ function ReportHazardScreenContent() {
         'Thank you! Your hazard report will be reviewed and added to the database.',
         [{ text: 'OK', onPress: () => router.back() }],
       );
+    },
+    onError: (error) => {
+      console.log('[ReportHazard] Submit error:', error);
+      Alert.alert('Submission Failed', 'Could not submit your report. Please check your connection and try again.');
     },
   });
 
@@ -172,7 +180,7 @@ function ReportHazardScreenContent() {
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     doSubmit();
   }, [name, road, heightStr, latStr, lonStr, rateLimit, doSubmit]);
 

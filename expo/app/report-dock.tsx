@@ -13,6 +13,7 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
+import { trpc } from '@/lib/trpc';
 import {
   MapPin,
   Building2,
@@ -80,7 +81,7 @@ function ReportDockScreenContent() {
               setLatStr(pos.coords.latitude.toFixed(6));
               setLonStr(pos.coords.longitude.toFixed(6));
               setIsLocating(false);
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             },
             () => {
               Alert.alert('Error', 'Could not get your location');
@@ -104,7 +105,7 @@ function ReportDockScreenContent() {
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       setLatStr(loc.coords.latitude.toFixed(6));
       setLonStr(loc.coords.longitude.toFixed(6));
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {
       Alert.alert('Error', 'Could not get your location.');
     } finally {
@@ -112,28 +113,31 @@ function ReportDockScreenContent() {
     }
   }, []);
 
+  const reportMutation = trpc.docks.report.useMutation();
+
   const submitMutation = useMutation({
     mutationFn: async () => {
       const payload = {
         businessName: businessName.trim(),
-        dockName: dockName.trim(),
+        dockName: dockName.trim() || undefined,
         category,
         dockType,
         address: address.trim(),
-        city: city.trim(),
-        state: state.trim(),
-        operatingHours: operatingHours.trim(),
-        phone: phone.trim(),
-        accessNotes: accessNotes.trim(),
+        city: city.trim() || undefined,
+        state: state.trim() || undefined,
+        operatingHours: operatingHours.trim() || undefined,
+        phone: phone.trim() || undefined,
+        accessNotes: accessNotes.trim() || undefined,
         latitude: parseFloat(latStr),
         longitude: parseFloat(lonStr),
       };
-      console.log('[ReportDock] Submitting:', payload);
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log('[ReportDock] Submitting to backend:', payload);
+      const result = await reportMutation.mutateAsync(payload);
+      console.log('[ReportDock] Backend response:', result);
       return { businessName: payload.businessName, address: payload.address };
     },
     onSuccess: (data) => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       addLocalNotification(
         'Dock Report Submitted',
         `Your report for "${data.businessName}" at ${data.address} is being reviewed.`,
@@ -144,6 +148,10 @@ function ReportDockScreenContent() {
         'Thank you! Your dock report will be reviewed and added to the database.',
         [{ text: 'OK', onPress: () => router.back() }],
       );
+    },
+    onError: (error) => {
+      console.log('[ReportDock] Submit error:', error);
+      Alert.alert('Submission Failed', 'Could not submit your report. Please check your connection and try again.');
     },
   });
 
@@ -187,7 +195,7 @@ function ReportDockScreenContent() {
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     doSubmit();
   }, [businessName, address, latStr, lonStr, phone, rateLimit, doSubmit]);
 

@@ -11,7 +11,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { ToastOverlay } from "@/context/ToastContext";
 import { trpc, trpcClient } from "@/lib/trpc";
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync();
 
 function StatusBarWrapper() {
   const { isDark } = useTheme();
@@ -26,7 +26,7 @@ function RootLayoutNav() {
 
   useEffect(() => {
     if (isLoaded) {
-      SplashScreen.hideAsync();
+      void SplashScreen.hideAsync();
     }
   }, [isLoaded]);
 
@@ -95,6 +95,10 @@ function RootLayoutNav() {
       <Stack.Screen
         name="fleet-manage"
         options={{ presentation: "modal", title: "Fleet Management" }}
+      />
+      <Stack.Screen
+        name="about"
+        options={{ title: "About" }}
       />
       <Stack.Screen name="+not-found" />
     </Stack>

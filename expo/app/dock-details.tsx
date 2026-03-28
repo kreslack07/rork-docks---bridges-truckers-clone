@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Linking,
   ActivityIndicator,
+  Share,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import {
@@ -25,6 +26,7 @@ import {
   Tag,
   Wifi,
   Heart,
+  Share2,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
@@ -46,7 +48,7 @@ function DockDetailsScreenContent() {
   const handleToggleFav = useCallback(() => {
     if (id) {
       toggleFavourite(id);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   }, [id, toggleFavourite]);
 
@@ -57,12 +59,12 @@ function DockDetailsScreenContent() {
       android: `google.navigation:q=${dock.latitude},${dock.longitude}`,
       default: `https://www.google.com/maps/dir/?api=1&destination=${dock.latitude},${dock.longitude}`,
     });
-    if (url) Linking.openURL(url);
+    if (url) void Linking.openURL(url);
   }, [dock]);
 
   const handleOpenWaze = useCallback(() => {
     if (!dock) return;
-    openInWaze({
+    void openInWaze({
       latitude: dock.latitude,
       longitude: dock.longitude,
       label: dock.name,
@@ -70,7 +72,7 @@ function DockDetailsScreenContent() {
   }, [dock]);
 
   const callDock = useCallback(() => {
-    if (dock?.phone) Linking.openURL(`tel:${dock.phone}`);
+    if (dock?.phone) void Linking.openURL(`tel:${dock.phone}`);
   }, [dock]);
 
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -152,6 +154,34 @@ function DockDetailsScreenContent() {
           </TouchableOpacity>
         )}
       </View>
+
+      <TouchableOpacity
+        style={styles.shareBtn}
+        onPress={() => {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          const mapsUrl = `https://www.google.com/maps?q=${dock.latitude},${dock.longitude}`;
+          const parts = [
+            dock.name,
+            dock.business,
+            dock.address + (dock.city ? `, ${dock.city}` : '') + (dock.state ? ` ${dock.state}` : ''),
+            `Type: ${dockTypeLabel}`,
+            dock.operatingHours ? `Hours: ${dock.operatingHours}` : '',
+            dock.phone ? `Phone: ${dock.phone}` : '',
+            '',
+            mapsUrl,
+          ].filter(Boolean);
+          void Share.share({
+            message: parts.join('\n'),
+            title: dock.name,
+          });
+        }}
+        activeOpacity={0.7}
+        accessibilityLabel={`Share ${dock.name} with other drivers`}
+        accessibilityRole="button"
+      >
+        <Share2 size={16} color={colors.primary} />
+        <Text style={styles.shareBtnText}>Share with Other Drivers</Text>
+      </TouchableOpacity>
 
       <View style={styles.card}>
         <View style={styles.cardRow}>
@@ -538,5 +568,22 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 11,
     marginTop: 8,
     lineHeight: 16,
+  },
+  shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.primary + '12',
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.primary + '25',
+  },
+  shareBtnText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '600' as const,
   },
 });

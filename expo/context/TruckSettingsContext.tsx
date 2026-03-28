@@ -5,6 +5,9 @@ import { usePersistedQuery, usePersistedBoolQuery } from '@/hooks/usePersistedQu
 
 const TRUCK_PROFILE_KEY = 'truck_profile';
 const VOICE_ENABLED_KEY = 'voice_navigation_enabled';
+const UNIT_PREFERENCE_KEY = 'unit_preference';
+
+export type UnitSystem = 'metric' | 'imperial';
 
 const DEFAULT_PROFILE: TruckProfile = {
   name: '',
@@ -28,6 +31,14 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
     defaultValue: true,
   });
 
+  const unitPersisted = usePersistedQuery<UnitSystem>({
+    key: UNIT_PREFERENCE_KEY,
+    queryKey: ['unitPreference'],
+    defaultValue: 'metric',
+    serialize: (v) => v,
+    deserialize: (v) => v as UnitSystem,
+  });
+
   const { updateValue: updateProfileValue } = profilePersisted;
   const { setValue: setVoiceValue } = voicePersisted;
 
@@ -44,6 +55,11 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
     console.log('[TruckSettings] Voice navigation:', enabled ? 'enabled' : 'disabled');
   }, [setVoiceValue]);
 
+  const setUnitSystem = useCallback((unit: UnitSystem) => {
+    unitPersisted.setValue(unit);
+    console.log('[TruckSettings] Unit system:', unit);
+  }, [unitPersisted]);
+
   const toggleVoice = useCallback(() => {
     setVoiceEnabled(!voicePersisted.value);
   }, [voicePersisted.value, setVoiceEnabled]);
@@ -57,6 +73,8 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
     isVoiceEnabled: voicePersisted.value,
     setVoiceEnabled,
     toggleVoice,
+    unitSystem: unitPersisted.value,
+    setUnitSystem,
   }), [
     profilePersisted.value,
     updateProfile,
@@ -65,6 +83,8 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
     voicePersisted.value,
     setVoiceEnabled,
     toggleVoice,
+    unitPersisted.value,
+    setUnitSystem,
   ]);
 });
 
@@ -76,4 +96,35 @@ export function useTruckProfile() {
 export function useVoice() {
   const { isVoiceEnabled, setVoiceEnabled, toggleVoice } = useTruckSettings();
   return { isVoiceEnabled, setVoiceEnabled, toggleVoice };
+}
+
+export function useUnits() {
+  const { unitSystem, setUnitSystem } = useTruckSettings();
+  const isMetric = unitSystem === 'metric';
+
+  const formatHeight = (metres: number): string => {
+    if (isMetric) return `${metres.toFixed(1)}m`;
+    const totalInches = metres / 0.0254;
+    const feet = Math.floor(totalInches / 12);
+    const inches = Math.round(totalInches % 12);
+    return `${feet}'${inches}"`;
+  };
+
+  const formatWeight = (tonnes: number): string => {
+    if (isMetric) return `${tonnes.toFixed(1)}t`;
+    const lbs = tonnes * 2204.62;
+    return lbs >= 1000 ? `${(lbs / 1000).toFixed(1)}k lbs` : `${Math.round(lbs)} lbs`;
+  };
+
+  const formatDistance = (km: number): string => {
+    if (isMetric) return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
+    const miles = km * 0.621371;
+    return miles < 0.1 ? `${Math.round(miles * 5280)}ft` : `${miles.toFixed(1)}mi`;
+  };
+
+  const heightUnit = isMetric ? 'm' : 'ft';
+  const weightUnit = isMetric ? 't' : 'lbs';
+  const distanceUnit = isMetric ? 'km' : 'mi';
+
+  return { unitSystem, setUnitSystem, isMetric, formatHeight, formatWeight, formatDistance, heightUnit, weightUnit, distanceUnit };
 }

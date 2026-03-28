@@ -16,13 +16,14 @@ import {
   LogIn,
   LogOut,
   User,
+  Info,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme, ThemeMode } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@/context/NotificationsContext';
-import { useVoice } from '@/context/TruckSettingsContext';
+import { useVoice, useUnits } from '@/context/TruckSettingsContext';
 import AppearanceSection from '@/components/profile/AppearanceSection';
 import VoiceSection from '@/components/profile/VoiceSection';
 import NotificationSettings from '@/components/profile/NotificationSettings';
@@ -33,16 +34,17 @@ export default function SettingsScreen() {
   const { user, isAuthenticated, signOut, deleteAccount, isDeletingAccount } = useAuth();
   const { unreadCount, prefs, updatePrefs } = useNotifications();
   const { isVoiceEnabled: voiceOn, setVoiceEnabled: setVoiceOnCtx } = useVoice();
+  const { unitSystem, setUnitSystem } = useUnits();
 
   const handleToggleVoice = useCallback(() => {
     const newVal = !voiceOn;
     setVoiceOnCtx(newVal);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, [voiceOn, setVoiceOnCtx]);
 
   const handleThemeChange = useCallback((newMode: ThemeMode) => {
     setThemeMode(newMode);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, [setThemeMode]);
 
   const handleSignOut = useCallback(() => {
@@ -52,8 +54,8 @@ export default function SettingsScreen() {
         text: 'Sign Out',
         style: 'destructive',
         onPress: () => {
-          signOut();
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          void signOut();
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         },
       },
     ]);
@@ -71,7 +73,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await deleteAccount();
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               Alert.alert('Account Deleted', 'Your account has been permanently deleted.');
             } catch (err: any) {
               Alert.alert('Error', err.message || 'Failed to delete account. Please try again.');
@@ -138,6 +140,50 @@ export default function SettingsScreen() {
         onUpdatePrefs={updatePrefs}
       />
 
+      <View style={styles.unitCard}>
+        <Text style={styles.unitCardTitle}>Units</Text>
+        <Text style={styles.unitCardDesc}>Choose measurement system</Text>
+        <View style={styles.unitToggleRow}>
+          {(['metric', 'imperial'] as const).map((u) => (
+            <TouchableOpacity
+              key={u}
+              style={[styles.unitToggleBtn, unitSystem === u && styles.unitToggleBtnActive]}
+              onPress={() => {
+                setUnitSystem(u);
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }}
+              activeOpacity={0.7}
+              accessibilityLabel={`Switch to ${u} units`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: unitSystem === u }}
+            >
+              <Text style={[styles.unitToggleText, unitSystem === u && styles.unitToggleTextActive]}>
+                {u === 'metric' ? 'Metric (m, km, t)' : 'Imperial (ft, mi, lbs)'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <Text style={styles.groupLabel}>INFO</Text>
+
+      <View style={styles.legalGroup}>
+        <TouchableOpacity
+          style={styles.legalItem}
+          onPress={() => router.push('/about')}
+          activeOpacity={0.7}
+          testID="settings-about-btn"
+          accessibilityLabel="About this app"
+          accessibilityRole="button"
+        >
+          <View style={styles.legalItemIcon}>
+            <Info size={16} color={colors.textSecondary} />
+          </View>
+          <Text style={styles.legalItemText}>About & Changelog</Text>
+          <ChevronRight size={16} color={colors.textMuted} />
+        </TouchableOpacity>
+      </View>
+
       <Text style={styles.groupLabel}>LEGAL</Text>
 
       <View style={styles.legalGroup}>
@@ -146,6 +192,8 @@ export default function SettingsScreen() {
           onPress={() => router.push('/privacy-policy')}
           activeOpacity={0.7}
           testID="settings-privacy-btn"
+          accessibilityLabel="Privacy Policy"
+          accessibilityRole="button"
         >
           <View style={styles.legalItemIcon}>
             <Shield size={16} color={colors.textSecondary} />
@@ -159,6 +207,8 @@ export default function SettingsScreen() {
           onPress={() => router.push('/terms-of-service')}
           activeOpacity={0.7}
           testID="settings-terms-btn"
+          accessibilityLabel="Terms of Service"
+          accessibilityRole="button"
         >
           <View style={styles.legalItemIcon}>
             <FileText size={16} color={colors.textSecondary} />
@@ -341,6 +391,50 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.danger,
     fontSize: 14,
     fontWeight: '600' as const,
+  },
+  unitCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  unitCardTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '700' as const,
+    marginBottom: 2,
+  },
+  unitCardDesc: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  unitToggleRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  unitToggleBtn: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: colors.elevated,
+    borderRadius: 10,
+    paddingVertical: 10,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  unitToggleBtnActive: {
+    backgroundColor: colors.primary + '15',
+    borderColor: colors.primary,
+  },
+  unitToggleText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600' as const,
+  },
+  unitToggleTextActive: {
+    color: colors.primary,
   },
   versionText: {
     color: colors.textMuted,

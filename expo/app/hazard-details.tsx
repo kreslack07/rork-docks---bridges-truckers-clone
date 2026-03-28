@@ -9,6 +9,7 @@ import {
   Linking,
   Platform,
   ActivityIndicator,
+  Share,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import {
@@ -22,6 +23,7 @@ import {
   ExternalLink,
   Navigation,
   Weight,
+  Share2,
 } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
@@ -30,6 +32,7 @@ import { useTruckProfile } from '@/context/TruckSettingsContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCommunity } from '@/context/CommunityContext';
 import { openInWaze } from '@/services/waze';
+import * as Haptics from 'expo-haptics';
 import ClearanceCard from '@/components/hazard/ClearanceCard';
 import CommunitySection from '@/components/hazard/CommunitySection';
 
@@ -144,7 +147,7 @@ function HazardDetailsScreenContent() {
               android: `google.navigation:q=${hazard.latitude},${hazard.longitude}`,
               default: `https://www.google.com/maps/dir/?api=1&destination=${hazard.latitude},${hazard.longitude}`,
             });
-            if (url) Linking.openURL(url);
+            if (url) void Linking.openURL(url);
           }}
           activeOpacity={0.7}
         >
@@ -154,7 +157,7 @@ function HazardDetailsScreenContent() {
         <TouchableOpacity
           style={styles.navActionWazeBtn}
           onPress={() => {
-            openInWaze({
+            void openInWaze({
               latitude: hazard.latitude,
               longitude: hazard.longitude,
               label: hazard.name,
@@ -166,6 +169,27 @@ function HazardDetailsScreenContent() {
           <Text style={styles.navActionWazeBtnText}>Open in Waze</Text>
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity
+        style={styles.shareBtn}
+        onPress={() => {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          const clearanceText = hazard.type === 'weight_limit'
+            ? `Weight limit: ${hazard.weightLimit}t`
+            : `Clearance: ${hazard.clearanceHeight.toFixed(1)}m`;
+          const mapsUrl = `https://www.google.com/maps?q=${hazard.latitude},${hazard.longitude}`;
+          void Share.share({
+            message: `${hazard.name}\n${hazard.road}, ${hazard.city} ${hazard.state}\n${clearanceText}\nLast verified: ${hazard.lastVerified}\n\n${mapsUrl}`,
+            title: hazard.name,
+          });
+        }}
+        activeOpacity={0.7}
+        accessibilityLabel={`Share ${hazard.name} with other drivers`}
+        accessibilityRole="button"
+      >
+        <Share2 size={16} color={colors.primary} />
+        <Text style={styles.shareBtnText}>Share with Other Drivers</Text>
+      </TouchableOpacity>
 
       <ClearanceCard
         hazard={hazard}
@@ -490,5 +514,22 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
     lineHeight: 18,
     fontWeight: '500' as const,
+  },
+  shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.primary + '12',
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.primary + '25',
+  },
+  shareBtnText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '600' as const,
   },
 });

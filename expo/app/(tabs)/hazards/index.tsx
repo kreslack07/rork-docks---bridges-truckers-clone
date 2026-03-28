@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Search, AlertTriangle, Zap, ArrowUpDown, Wifi, Shield, Weight, MapPin } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import { useLiveData } from '@/context/LiveDataContext';
@@ -182,6 +183,8 @@ export default function HazardsScreen() {
             value={search}
             onChangeText={setSearch}
             testID="hazards-search-input"
+            accessibilityLabel="Search hazards by name, road, city, or state"
+            accessibilityRole="search"
           />
         </View>
         <TouchableOpacity
@@ -208,6 +211,9 @@ export default function HazardsScreen() {
             style={[styles.filterChip, filter === f.key && styles.filterChipActive]}
             onPress={() => setFilter(f.key)}
             activeOpacity={0.7}
+            accessibilityLabel={`Filter by ${f.label}, ${f.count} items`}
+            accessibilityRole="button"
+            accessibilityState={{ selected: filter === f.key }}
           >
             <Text
               style={[
@@ -325,8 +331,13 @@ const HazardListItem = memo(function HazardListItem({ item, styles, colors, call
     <TouchableOpacity
       style={styles.hazardCard}
       activeOpacity={0.7}
-      onPress={() => onPress(item.id)}
+      onPress={() => {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress(item.id);
+      }}
       testID={`hazard-${item.id}`}
+      accessibilityLabel={`${item.name}, ${item.road}, ${item.city}. Clearance ${item.type === 'weight_limit' ? `${item.weightLimit} tonnes` : `${item.clearanceHeight.toFixed(1)} metres`}. ${statusLabel}`}
+      accessibilityRole="button"
     >
       <View style={styles.hazardCardLeft}>
         <View style={[styles.hazardTypeIcon, { backgroundColor: statusColor + '15' }]}>
