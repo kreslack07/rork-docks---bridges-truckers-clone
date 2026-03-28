@@ -1,5 +1,7 @@
 import { Platform } from 'react-native';
 
+import { logger } from '@/utils/logger';
+
 const isWeb = Platform.OS === 'web';
 
 let Speech: typeof import('expo-speech') | null = null;
@@ -35,10 +37,10 @@ async function processQueue(): Promise<void> {
 
   if (speakingTimeout) clearTimeout(speakingTimeout);
   speakingTimeout = setTimeout(() => {
-    console.log('[Voice] Safety timeout — resetting isSpeaking');
+    logger.log('[Voice] Safety timeout — resetting isSpeaking');
     isSpeaking = false;
     speakingTimeout = null;
-    processQueue();
+    void processQueue();
   }, SPEAKING_SAFETY_TIMEOUT_MS);
 
   if (isWeb) {
@@ -50,23 +52,23 @@ async function processQueue(): Promise<void> {
         utterance.onend = () => {
           isSpeaking = false;
           if (speakingTimeout) { clearTimeout(speakingTimeout); speakingTimeout = null; }
-          processQueue();
+          void processQueue();
         };
         utterance.onerror = () => {
           isSpeaking = false;
           if (speakingTimeout) { clearTimeout(speakingTimeout); speakingTimeout = null; }
-          console.log('[Voice] Web speech error');
-          processQueue();
+          logger.log('[Voice] Web speech error');
+          void processQueue();
         };
         window.speechSynthesis.speak(utterance);
       } else {
         isSpeaking = false;
-        processQueue();
+        void processQueue();
       }
     } catch (e) {
       isSpeaking = false;
-      console.log('[Voice] Web speech error:', e);
-      processQueue();
+      logger.log('[Voice] Web speech error:', e);
+      void processQueue();
     }
     return;
   }
@@ -79,20 +81,20 @@ async function processQueue(): Promise<void> {
       onDone: () => {
         isSpeaking = false;
         if (speakingTimeout) { clearTimeout(speakingTimeout); speakingTimeout = null; }
-        processQueue();
+        void processQueue();
       },
       onError: () => {
         isSpeaking = false;
         if (speakingTimeout) { clearTimeout(speakingTimeout); speakingTimeout = null; }
-        console.log('[Voice] Speech error');
-        processQueue();
+        logger.log('[Voice] Speech error');
+        void processQueue();
       },
     });
   } catch (e) {
     isSpeaking = false;
     if (speakingTimeout) { clearTimeout(speakingTimeout); speakingTimeout = null; }
-    console.log('[Voice] Speech error:', e);
-    processQueue();
+    logger.log('[Voice] Speech error:', e);
+    void processQueue();
   }
 }
 
@@ -106,8 +108,8 @@ export function speakInstruction(instruction: string): void {
     .replace(/\b(\d+(\.\d+)?)\s*km\b/g, '$1 kilometres');
 
   speechQueue.push(cleaned);
-  processQueue();
-  console.log('[Voice] Speaking:', cleaned);
+  void processQueue();
+  logger.log('[Voice] Speaking:', cleaned);
 }
 
 export interface HazardWarningParams {
@@ -161,24 +163,24 @@ export function speakHazardWarning(
   }
 
   speechQueue.unshift(message);
-  processQueue();
-  console.log('[Voice] Hazard warning:', message);
+  void processQueue();
+  logger.log('[Voice] Hazard warning:', message);
 }
 
 export function speakNavigationStart(destination: string): void {
   const message = `Navigation started. Heading to ${destination}.`;
   speechQueue.push(message);
-  processQueue();
+  void processQueue();
 }
 
 export function speakNavigationEnd(): void {
   speechQueue = ['You have arrived at your destination.'];
-  processQueue();
+  void processQueue();
 }
 
 export function speakRerouting(): void {
   speechQueue = ['Recalculating route.'];
-  processQueue();
+  void processQueue();
 }
 
 export function speakDistanceUpdate(distanceMeters: number): void {
@@ -191,7 +193,7 @@ export function speakDistanceUpdate(distanceMeters: number): void {
   }
 
   speechQueue.push(message);
-  processQueue();
+  void processQueue();
 }
 
 export function stopSpeaking(): void {
@@ -205,10 +207,10 @@ export function stopSpeaking(): void {
         window.speechSynthesis.cancel();
       }
     } else {
-      Speech?.stop();
+      void Speech?.stop();
     }
   } catch (e) {
-    console.log('[Voice] Stop error:', e);
+    logger.log('[Voice] Stop error:', e);
   }
 }
 

@@ -129,21 +129,30 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     onSuccess: () => setUser(null),
   });
 
+  const signUpRef = useRef(signUpMutation);
+  signUpRef.current = signUpMutation;
+  const signInRef = useRef(signInMutation);
+  signInRef.current = signInMutation;
+  const signOutRef = useRef(signOutMutation);
+  signOutRef.current = signOutMutation;
+  const deleteAccountRef = useRef(deleteAccountMutation);
+  deleteAccountRef.current = deleteAccountMutation;
+
   const signUp = useCallback(
-    (args: { email: string; password: string; displayName: string }) => signUpMutation.mutateAsync(args),
-    [signUpMutation],
+    (args: { email: string; password: string; displayName: string }) => signUpRef.current.mutateAsync(args),
+    [],
   );
   const signIn = useCallback(
-    (args: { email: string; password: string }) => signInMutation.mutateAsync(args),
-    [signInMutation],
+    (args: { email: string; password: string }) => signInRef.current.mutateAsync(args),
+    [],
   );
   const signOut = useCallback(
-    () => signOutMutation.mutateAsync(),
-    [signOutMutation],
+    () => signOutRef.current.mutateAsync(),
+    [],
   );
   const deleteAccount = useCallback(
-    () => deleteAccountMutation.mutateAsync(),
-    [deleteAccountMutation],
+    () => deleteAccountRef.current.mutateAsync(),
+    [],
   );
 
   return useMemo(() => ({

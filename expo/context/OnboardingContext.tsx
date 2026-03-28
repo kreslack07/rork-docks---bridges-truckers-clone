@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import { usePersistedBoolQuery } from '@/hooks/usePersistedQuery';
 
@@ -21,10 +21,10 @@ export const [OnboardingProvider, useOnboarding] = createContextHook(() => {
     removePersistedValue();
   }, [removePersistedValue]);
 
-  return {
+  return useMemo(() => ({
     isComplete: persisted.value,
     isLoaded: persisted.isLoaded,
     completeOnboarding,
     resetOnboarding,
-  };
+  }), [persisted.value, persisted.isLoaded, completeOnboarding, resetOnboarding]);
 });

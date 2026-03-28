@@ -17,6 +17,7 @@ import {
 } from '@/services/live-tracking';
 import { classifyHazards } from '@/utils/classify-hazards';
 import { useToast } from '@/context/ToastContext';
+import { logger } from '@/utils/logger';
 
 export interface LiveRouteData {
   route: LiveRouteResult;
@@ -92,18 +93,18 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
       truckWeight?: number;
       truckWidth?: number;
     }) => {
-      console.log('[Navigation] Rerouting from current position...');
+      logger.log('[Navigation] Rerouting from current position...');
       return computeLiveRoute(origin, destination, truckHeight, truckWeight, truckWidth, undefined);
     },
     onSuccess: (data) => {
       if (data) {
         setLiveRoute(data);
         setRerouteCount((c) => c + 1);
-        console.log('[Navigation] Reroute complete:', { blocked: data.blockedHazards.length, tight: data.tightHazards.length });
+        logger.log('[Navigation] Reroute complete:', { blocked: data.blockedHazards.length, tight: data.tightHazards.length });
       }
     },
     onError: (error) => {
-      console.log('[Navigation] Reroute error:', error);
+      logger.log('[Navigation] Reroute error:', error);
       showToast('error', 'Reroute Failed', 'Could not calculate a new route');
     },
   });
@@ -141,7 +142,7 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
     setNavProgress(progress);
 
     if (progress.isOffRoute && destinationRef.current && !isReroutePendingRef.current) {
-      console.log('[Navigation] Off route detected, rerouting...');
+      logger.log('[Navigation] Off route detected, rerouting...');
       doRerouteMutateRef.current({
         origin: { latitude: pos.latitude, longitude: pos.longitude },
         destination: destinationRef.current,
@@ -153,7 +154,7 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
 
     if (progress.completionPercent >= 98 && !hasArrivedRef.current) {
       hasArrivedRef.current = true;
-      console.log('[Navigation] Destination reached — auto-stopping navigation');
+      logger.log('[Navigation] Destination reached — auto-stopping navigation');
       stopLocationTracking();
       setIsNavigating(false);
       setNavProgress(progress);
@@ -179,10 +180,10 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
     if (started) {
       setIsNavigating(true);
       setRerouteCount(0);
-      console.log('[Navigation] Live navigation started');
+      logger.log('[Navigation] Live navigation started');
       return true;
     }
-    console.log('[Navigation] Failed to start tracking');
+    logger.log('[Navigation] Failed to start tracking');
     return false;
   }, [liveRoute, stablePositionCallback]);
 
@@ -192,7 +193,7 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
     setNavProgress(null);
     setLivePosition(null);
     destinationRef.current = null;
-    console.log('[Navigation] Navigation stopped');
+    logger.log('[Navigation] Navigation stopped');
   }, []);
 
   useEffect(() => {
@@ -221,12 +222,12 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
     }) => {
       if (activeAbortRef.current) {
         activeAbortRef.current.abort();
-        console.log('[Navigation] Previous route computation cancelled');
+        logger.log('[Navigation] Previous route computation cancelled');
       }
       const controller = new AbortController();
       activeAbortRef.current = controller;
 
-      console.log('[Navigation] Computing live route...');
+      logger.log('[Navigation] Computing live route...');
       const result = await computeLiveRoute(origin, destination, truckHeight, truckWeight, truckWidth, controller.signal);
 
       if (controller.signal.aborted) {
@@ -239,7 +240,7 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
     onSuccess: (data) => {
       if (data) {
         setLiveRoute(data);
-        console.log('[Navigation] Route analysis complete:', {
+        logger.log('[Navigation] Route analysis complete:', {
           distance: data.route.distance,
           duration: data.route.duration,
           blocked: data.blockedHazards.length,
@@ -250,7 +251,7 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
       }
     },
     onError: (error) => {
-      console.log('[Navigation] Route computation error:', error);
+      logger.log('[Navigation] Route computation error:', error);
       showToast('error', 'Route Error', 'Could not compute route — try again');
     },
   });

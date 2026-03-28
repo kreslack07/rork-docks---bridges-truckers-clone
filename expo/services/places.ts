@@ -1,5 +1,6 @@
 import { Dock, BusinessCategory } from '@/types';
 import { throttledOverpassFetch } from '@/services/overpass-throttle';
+import { logger } from '@/utils/logger';
 
 interface OverpassElement {
   type: string;
@@ -65,7 +66,7 @@ function resolveDockType(tags: Record<string, string>): 'loading' | 'unloading' 
   return 'both';
 }
 
-function buildDockFromElement(el: OverpassElement, index: number): Dock | null {
+function buildDockFromElement(el: OverpassElement, _index: number): Dock | null {
   const lat = el.lat ?? el.center?.lat;
   const lon = el.lon ?? el.center?.lon;
   if (!lat || !lon || !el.tags) return null;
@@ -142,17 +143,17 @@ export async function searchDocksNearby(
   `;
 
   try {
-    console.log('[Places] Fetching docks near', lat.toFixed(3), lon.toFixed(3), 'radius', radiusKm, 'km');
+    logger.log('[Places] Fetching docks near', lat.toFixed(3), lon.toFixed(3), 'radius', radiusKm, 'km');
     const response = await throttledOverpassFetch(query, 'Places', signal);
 
     if (!response) {
-      console.log('[Places] Overpass request throttled or failed');
+      logger.log('[Places] Overpass request throttled or failed');
       throw new Error('Overpass API unavailable — throttled or all endpoints failed');
     }
 
     const data = await response.json();
     const elements: OverpassElement[] = data.elements || [];
-    console.log('[Places] Raw elements received:', elements.length);
+    logger.log('[Places] Raw elements received:', elements.length);
 
     const docks: Dock[] = [];
     const seen = new Set<string>();
@@ -168,21 +169,21 @@ export async function searchDocksNearby(
       }
     }
 
-    console.log('[Places] Processed docks:', docks.length);
+    logger.log('[Places] Processed docks:', docks.length);
     return docks;
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      console.log('[Places] Fetch aborted');
+      logger.log('[Places] Fetch aborted');
       throw error;
     }
-    console.log('[Places] Fetch error:', error);
+    logger.log('[Places] Fetch error:', error);
     throw error;
   }
 }
 
 export async function searchDocksByQuery(query: string, signal?: AbortSignal): Promise<Dock[]> {
   try {
-    console.log('[Places] Text search:', query);
+    logger.log('[Places] Text search:', query);
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ', Australia')}&format=json&limit=5&addressdetails=1`;
     const response = await fetch(url, {
       headers: { 'User-Agent': 'TruckDockFinderAU/1.0' },
@@ -200,10 +201,10 @@ export async function searchDocksByQuery(query: string, signal?: AbortSignal): P
     return searchDocksNearby(lat, lon, 10, signal);
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      console.log('[Places] Text search aborted');
+      logger.log('[Places] Text search aborted');
       throw error;
     }
-    console.log('[Places] Text search error:', error);
+    logger.log('[Places] Text search error:', error);
     return [];
   }
 }

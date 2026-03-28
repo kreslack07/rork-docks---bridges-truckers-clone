@@ -1,5 +1,6 @@
 import { RouteCoordinate, RouteStep, Hazard } from '@/types';
 import { haversineDistance } from '@/utils/geo';
+import { logger } from '@/utils/logger';
 import { classifyHazards } from '@/utils/classify-hazards';
 
 const OSRM_ENDPOINTS = [
@@ -23,12 +24,12 @@ if (__DEV__) {
 export function resetRoutingState(): void {
   currentOsrmIndex = 0;
   lastOsrmFailure = 0;
-  console.log('[Routing] State reset');
+  logger.log('[Routing] State reset');
 }
 
 function getOsrmEndpoint(): string {
   if (currentOsrmIndex !== 0 && Date.now() - lastOsrmFailure >= OSRM_COOLDOWN_MS) {
-    console.log('[Routing] Cooldown expired — recovering to primary endpoint');
+    logger.log('[Routing] Cooldown expired — recovering to primary endpoint');
     currentOsrmIndex = 0;
   }
   return OSRM_ENDPOINTS[currentOsrmIndex];
@@ -51,7 +52,7 @@ export interface LiveRouteResult {
 export async function geocodeAddress(query: string, signal?: AbortSignal): Promise<GeocodedPlace[]> {
   try {
     const url = `${NOMINATIM_BASE}?q=${encodeURIComponent(query)}&format=json&countrycodes=au&limit=8&addressdetails=1`;
-    console.log('[Routing] Geocoding:', query);
+    logger.log('[Routing] Geocoding:', query);
 
     const response = await fetch(url, {
       headers: {
@@ -61,12 +62,12 @@ export async function geocodeAddress(query: string, signal?: AbortSignal): Promi
     });
 
     if (!response.ok) {
-      console.log('[Routing] Geocode failed:', response.status);
+      logger.log('[Routing] Geocode failed:', response.status);
       return [];
     }
 
     const data = await response.json();
-    console.log('[Routing] Geocode results:', data.length);
+    logger.log('[Routing] Geocode results:', data.length);
 
     return data.map((item: any) => ({
       displayName: item.display_name,
@@ -75,9 +76,9 @@ export async function geocodeAddress(query: string, signal?: AbortSignal): Promi
     }));
   } catch (error: any) {
     if (error?.name === 'AbortError') {
-      console.log('[Routing] Geocode aborted');
+      logger.log('[Routing] Geocode aborted');
     } else {
-      console.log('[Routing] Geocode error:', error);
+      logger.log('[Routing] Geocode error:', error);
     }
     return [];
   }
@@ -89,7 +90,7 @@ function buildRouteUrl(endpoint: string, origin: RouteCoordinate, destination: R
 
 function parseOsrmResponse(data: any): LiveRouteResult | null {
   if (data.code !== 'Ok' || !data.routes?.length) {
-    console.log('[Routing] No routes found:', data.code);
+    logger.log('[Routing] No routes found:', data.code);
     return null;
   }
 
@@ -104,7 +105,7 @@ function parseOsrmResponse(data: any): LiveRouteResult | null {
     maneuver: step.maneuver?.type ?? 'straight',
   }));
 
-  console.log('[Routing] Route found:', {
+  logger.log('[Routing] Route found:', {
     distance: route.distance,
     duration: route.duration,
     steps: steps.length,
@@ -128,7 +129,7 @@ export async function getRoute(
   try {
     const endpoint = getOsrmEndpoint();
     const url = buildRouteUrl(endpoint, origin, destination);
-    console.log('[Routing] Fetching route via', endpoint);
+    logger.log('[Routing] Fetching route via', endpoint);
 
     const response = await fetch(url, {
       headers: { 'User-Agent': 'DocksAndBridgesAU/1.0' },
@@ -136,12 +137,12 @@ export async function getRoute(
     });
 
     if (!response.ok) {
-      console.log('[Routing] Route fetch failed:', response.status);
+      logger.log('[Routing] Route fetch failed:', response.status);
       lastOsrmFailure = Date.now();
 
       if (response.status === 429 || response.status === 503) {
         currentOsrmIndex = (currentOsrmIndex + 1) % OSRM_ENDPOINTS.length;
-        console.log('[Routing] Switching to fallback OSRM endpoint');
+        logger.log('[Routing] Switching to fallback OSRM endpoint');
         const fallbackUrl = buildRouteUrl(getOsrmEndpoint(), origin, destination);
         const fallbackResp = await fetch(fallbackUrl, {
           headers: { 'User-Agent': 'DocksAndBridgesAU/1.0' },
@@ -156,9 +157,9 @@ export async function getRoute(
     return parseOsrmResponse(await response.json());
   } catch (error: any) {
     if (error?.name === 'AbortError') {
-      console.log('[Routing] Route request aborted');
+      logger.log('[Routing] Route request aborted');
     } else {
-      console.log('[Routing] Route error:', error);
+      logger.log('[Routing] Route error:', error);
     }
     return null;
   }
@@ -219,7 +220,7 @@ export function analyzeRouteHazards(
   const nearby = filterHazardsNearRoute(routeCoords, hazardsList, proximityKm);
   const { blocked, tight, safe } = classifyHazards(nearby, truckHeight, truckWeight, truckWidth);
 
-  console.log('[Routing] Hazard analysis:', {
+  logger.log('[Routing] Hazard analysis:', {
     nearby: nearby.length,
     blocked: blocked.length,
     tight: tight.length,

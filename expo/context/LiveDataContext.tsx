@@ -8,6 +8,7 @@ import { fetchHazardsInArea } from '@/services/hazards-api';
 import { haversineDistance } from '@/utils/geo';
 import { isRateLimited } from '@/services/overpass-throttle';
 import { useToast } from '@/context/ToastContext';
+import { logger } from '@/utils/logger';
 import { DOCKS as MOCK_DOCKS } from '@/mocks/docks';
 import { HAZARDS as MOCK_HAZARDS } from '@/mocks/hazards';
 
@@ -54,11 +55,11 @@ async function loadCachedDocks(): Promise<Dock[]> {
     const stored = await AsyncStorage.getItem(CACHE_DOCKS_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      console.log('[LiveData] Loaded cached docks:', parsed.length);
+      logger.log('[LiveData] Loaded cached docks:', parsed.length);
       return parsed as Dock[];
     }
   } catch (e) {
-    console.log('[LiveData] Cache read error (docks):', e);
+    logger.log('[LiveData] Cache read error (docks):', e);
   }
   return [];
 }
@@ -68,11 +69,11 @@ async function loadCachedHazards(): Promise<Hazard[]> {
     const stored = await AsyncStorage.getItem(CACHE_HAZARDS_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      console.log('[LiveData] Loaded cached hazards:', parsed.length);
+      logger.log('[LiveData] Loaded cached hazards:', parsed.length);
       return parsed as Hazard[];
     }
   } catch (e) {
-    console.log('[LiveData] Cache read error (hazards):', e);
+    logger.log('[LiveData] Cache read error (hazards):', e);
   }
   return [];
 }
@@ -81,9 +82,9 @@ async function saveCachedDocks(docks: Dock[]): Promise<void> {
   try {
     const limited = docks.slice(0, MAX_CACHED_DOCKS);
     await AsyncStorage.setItem(CACHE_DOCKS_KEY, JSON.stringify(limited));
-    console.log('[LiveData] Cached docks saved:', limited.length);
+    logger.log('[LiveData] Cached docks saved:', limited.length);
   } catch (e) {
-    console.log('[LiveData] Cache write error (docks):', e);
+    logger.log('[LiveData] Cache write error (docks):', e);
   }
 }
 
@@ -91,9 +92,9 @@ async function saveCachedHazards(hazards: Hazard[]): Promise<void> {
   try {
     const limited = hazards.slice(0, MAX_CACHED_HAZARDS);
     await AsyncStorage.setItem(CACHE_HAZARDS_KEY, JSON.stringify(limited));
-    console.log('[LiveData] Cached hazards saved:', limited.length);
+    logger.log('[LiveData] Cached hazards saved:', limited.length);
   } catch (e) {
-    console.log('[LiveData] Cache write error (hazards):', e);
+    logger.log('[LiveData] Cache write error (hazards):', e);
   }
 }
 
@@ -149,11 +150,11 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   const docksQuery = useQuery({
     queryKey: ['docks', lat, lon],
     queryFn: async ({ signal }) => {
-      console.log('[LiveData] Fetching real docks near', lat.toFixed(3), lon.toFixed(3));
+      logger.log('[LiveData] Fetching real docks near', lat.toFixed(3), lon.toFixed(3));
       const mockDocks = getMockDocksNear(lat, lon);
 
       if (isRateLimited()) {
-        console.log('[LiveData] API rate limited — returning mock docks only');
+        logger.log('[LiveData] API rate limited — returning mock docks only');
         scheduleRateLimitRetry();
         return mockDocks;
       }
@@ -162,14 +163,14 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
         const realDocks = await searchDocksNearby(lat, lon, 20, signal);
         if (realDocks.length > 0) {
           const merged = mergeWithMockData(realDocks, mockDocks);
-          console.log('[LiveData] Merged docks: API', realDocks.length, '+ mock', mockDocks.length, '= total', merged.length);
+          logger.log('[LiveData] Merged docks: API', realDocks.length, '+ mock', mockDocks.length, '= total', merged.length);
           void saveCachedDocks(merged);
           return merged;
         }
-        console.log('[LiveData] No API docks returned, using mock fallback');
+        logger.log('[LiveData] No API docks returned, using mock fallback');
         return mockDocks;
       } catch (error) {
-        console.log('[LiveData] Dock fetch failed, throwing for RQ retry:', error);
+        logger.log('[LiveData] Dock fetch failed, throwing for RQ retry:', error);
         throw error;
       }
     },
@@ -183,11 +184,11 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   const hazardsQuery = useQuery({
     queryKey: ['hazards', lat, lon],
     queryFn: async ({ signal }) => {
-      console.log('[LiveData] Fetching real hazards near', lat.toFixed(3), lon.toFixed(3));
+      logger.log('[LiveData] Fetching real hazards near', lat.toFixed(3), lon.toFixed(3));
       const mockHazards = getMockHazardsNear(lat, lon);
 
       if (isRateLimited()) {
-        console.log('[LiveData] API rate limited — returning mock hazards only');
+        logger.log('[LiveData] API rate limited — returning mock hazards only');
         scheduleRateLimitRetry();
         return mockHazards;
       }
@@ -196,14 +197,14 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
         const realHazards = await fetchHazardsInArea(lat, lon, 40, signal);
         if (realHazards.length > 0) {
           const merged = mergeWithMockData(realHazards, mockHazards);
-          console.log('[LiveData] Merged hazards: API', realHazards.length, '+ mock', mockHazards.length, '= total', merged.length);
+          logger.log('[LiveData] Merged hazards: API', realHazards.length, '+ mock', mockHazards.length, '= total', merged.length);
           void saveCachedHazards(merged);
           return merged;
         }
-        console.log('[LiveData] No API hazards returned, using mock fallback');
+        logger.log('[LiveData] No API hazards returned, using mock fallback');
         return mockHazards;
       } catch (error) {
-        console.log('[LiveData] Hazard fetch failed, throwing for RQ retry:', error);
+        logger.log('[LiveData] Hazard fetch failed, throwing for RQ retry:', error);
         throw error;
       }
     },
@@ -249,7 +250,7 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     lastToastRef.current = { key: toastKey, time: now };
 
     if (toastKey === 'offline') {
-      console.log('[LiveData] Both queries failed — falling back to mock + cached data');
+      logger.log('[LiveData] Both queries failed — falling back to mock + cached data');
       const mockDocks = getMockDocksNear(lat, lon);
       if (mockDocks.length > 0) {
         queryClient.setQueryData(['cachedDocks'], (prev: Dock[] | undefined) =>
@@ -287,7 +288,7 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     const current = mapCenterRef.current;
     const dist = Math.abs(coord.latitude - current.latitude) + Math.abs(coord.longitude - current.longitude);
     if (dist > 0.2) {
-      console.log('[LiveData] Map center updated, will refetch');
+      logger.log('[LiveData] Map center updated, will refetch');
       setMapCenter(coord);
     }
   }, []);

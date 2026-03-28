@@ -6,6 +6,7 @@ if (Platform.OS !== 'web') {
   Location = require('expo-location');
 }
 import { haversineDistance } from '@/utils/geo';
+import { logger } from '@/utils/logger';
 
 export interface LivePosition {
   latitude: number;
@@ -140,7 +141,7 @@ class LocationTracker {
     try {
       if (Platform.OS === 'web') {
         if (!navigator.geolocation) {
-          console.log('[LiveTracking] Web geolocation not available');
+          logger.log('[LiveTracking] Web geolocation not available');
           return false;
         }
 
@@ -156,7 +157,7 @@ class LocationTracker {
             });
           },
           (err) => {
-            console.log('[LiveTracking] Web watch error:', err.message);
+            logger.log('[LiveTracking] Web watch error:', err.message);
           },
           {
             enableHighAccuracy: true,
@@ -165,18 +166,18 @@ class LocationTracker {
           },
         );
 
-        console.log('[LiveTracking] Web watch started, id:', this.webWatchId);
+        logger.log('[LiveTracking] Web watch started, id:', this.webWatchId);
         return true;
       }
 
       if (!Location) {
-        console.log('[LiveTracking] expo-location not available');
+        logger.log('[LiveTracking] expo-location not available');
         return false;
       }
 
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        console.log('[LiveTracking] Permission denied');
+        logger.log('[LiveTracking] Permission denied');
         return false;
       }
 
@@ -198,10 +199,10 @@ class LocationTracker {
         },
       );
 
-      console.log('[LiveTracking] Native watch started');
+      logger.log('[LiveTracking] Native watch started');
       return true;
     } catch (error) {
-      console.log('[LiveTracking] Start error:', error);
+      logger.log('[LiveTracking] Start error:', error);
       return false;
     }
   }
@@ -210,13 +211,13 @@ class LocationTracker {
     if (this.watchSubscription) {
       this.watchSubscription.remove();
       this.watchSubscription = null;
-      console.log('[LiveTracking] Native watch stopped');
+      logger.log('[LiveTracking] Native watch stopped');
     }
 
     if (Platform.OS === 'web' && this.webWatchId !== null) {
       navigator.geolocation.clearWatch(this.webWatchId);
       this.webWatchId = null;
-      console.log('[LiveTracking] Web watch stopped');
+      logger.log('[LiveTracking] Web watch stopped');
     }
   }
 }

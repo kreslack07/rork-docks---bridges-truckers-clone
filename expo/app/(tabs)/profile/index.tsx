@@ -45,7 +45,8 @@ export default function ProfileScreen() {
   const { truckCount, activeTruck } = useFleet();
 
   const favouriteDocks = useMemo(() => {
-    return docks.filter((d) => favouriteDockIds.includes(d.id));
+    const idSet = new Set(favouriteDockIds);
+    return docks.filter((d) => idSet.has(d.id));
   }, [docks, favouriteDockIds]);
 
   const handleClearRecents = useCallback(() => {

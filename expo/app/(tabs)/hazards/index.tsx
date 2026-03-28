@@ -34,6 +34,15 @@ export default function HazardsScreen() {
   const [sortMode, setSortMode] = useState<SortMode>('name');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refetchHazards();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetchHazards]);
+
   const filteredHazards = useMemo(() => {
     let result = hazards;
 
@@ -214,24 +223,22 @@ export default function HazardsScreen() {
 
       <FlatList
         data={filteredHazards}
-        keyExtractor={(item) => item.id}
+        keyExtractor={keyExtractor}
         renderItem={renderItem}
         getItemLayout={getItemLayout}
         contentContainerStyle={styles.listContent}
         ItemSeparatorComponent={ListSeparator}
         showsVerticalScrollIndicator={false}
         keyboardDismissMode="on-drag"
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={12}
+        windowSize={7}
+        initialNumToRender={10}
+        updateCellsBatchingPeriod={50}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
-            onRefresh={async () => {
-              setIsRefreshing(true);
-              try {
-                await refetchHazards();
-              } finally {
-                setIsRefreshing(false);
-              }
-            }}
+            onRefresh={handleRefresh}
             tintColor={colors.primary}
             colors={[colors.primary]}
           />
@@ -350,6 +357,8 @@ const HazardListItem = memo(function HazardListItem({ item, styles, colors, call
     </TouchableOpacity>
   );
 });
+
+const keyExtractor = (item: Hazard) => item.id;
 
 const HAZARD_ITEM_HEIGHT = 82;
 const SEPARATOR_HEIGHT = 10;

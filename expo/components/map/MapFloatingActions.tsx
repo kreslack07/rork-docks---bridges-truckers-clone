@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { AlertTriangle, Plus } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
@@ -18,7 +18,7 @@ function MapFloatingActionsComponent({
   onViewHazards,
   onReportHazard,
 }: MapFloatingActionsProps) {
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
     <View style={[styles.container, { bottom: insetBottom + 118 }]}>

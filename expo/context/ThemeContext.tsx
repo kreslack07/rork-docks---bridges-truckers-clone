@@ -42,11 +42,11 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
     return isDark ? DarkTheme : LightTheme;
   }, [isDark]);
 
-  return {
+  return useMemo(() => ({
     mode,
     isDark,
     colors,
     isLoaded,
     setThemeMode,
-  };
+  }), [mode, isDark, colors, isLoaded, setThemeMode]);
 });

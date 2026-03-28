@@ -76,7 +76,7 @@ export const [ToastProvider, useToast] = createContextHook(() => {
     };
   }, []);
 
-  return { toast, showToast, dismissToast };
+  return useMemo(() => ({ toast, showToast, dismissToast }), [toast, showToast, dismissToast]);
 });
 
 export function ToastOverlay() {

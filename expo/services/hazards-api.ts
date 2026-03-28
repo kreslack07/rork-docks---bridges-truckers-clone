@@ -1,5 +1,6 @@
 import { Hazard } from '@/types';
 import { throttledOverpassFetch } from '@/services/overpass-throttle';
+import { logger } from '@/utils/logger';
 
 interface OverpassElement {
   type: string;
@@ -137,18 +138,18 @@ export async function fetchHazardsInArea(
   `;
 
   try {
-    console.log('[Hazards API] Fetching hazards near', lat.toFixed(3), lon.toFixed(3), 'radius', radiusKm, 'km');
+    logger.log('[Hazards API] Fetching hazards near', lat.toFixed(3), lon.toFixed(3), 'radius', radiusKm, 'km');
 
     const response = await throttledOverpassFetch(query, 'Hazards API', signal);
 
     if (!response) {
-      console.log('[Hazards API] Overpass returned null (throttled or failed)');
+      logger.log('[Hazards API] Overpass returned null (throttled or failed)');
       throw new Error('Overpass API unavailable — throttled or all endpoints failed');
     }
 
     const data = await response.json();
     const elements: OverpassElement[] = data.elements || [];
-    console.log('[Hazards API] Raw elements:', elements.length);
+    logger.log('[Hazards API] Raw elements:', elements.length);
 
     const hazards: Hazard[] = [];
     const seen = new Set<string>();
@@ -165,14 +166,14 @@ export async function fetchHazardsInArea(
     }
 
     hazards.sort((a, b) => a.clearanceHeight - b.clearanceHeight);
-    console.log('[Hazards API] Processed hazards:', hazards.length);
+    logger.log('[Hazards API] Processed hazards:', hazards.length);
     return hazards;
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      console.log('[Hazards API] Fetch aborted');
+      logger.log('[Hazards API] Fetch aborted');
       throw error;
     }
-    console.log('[Hazards API] Fetch error:', error);
+    logger.log('[Hazards API] Fetch error:', error);
     throw error;
   }
 }
@@ -215,7 +216,7 @@ export async function fetchHazardsAlongRoute(
   `;
 
   try {
-    console.log('[Hazards API] Fetching hazards along route bbox');
+    logger.log('[Hazards API] Fetching hazards along route bbox');
     const response = await throttledOverpassFetch(query, 'Hazards API', signal);
 
     if (!response) {
@@ -239,14 +240,14 @@ export async function fetchHazardsAlongRoute(
       }
     }
 
-    console.log('[Hazards API] Route hazards found:', hazards.length);
+    logger.log('[Hazards API] Route hazards found:', hazards.length);
     return hazards;
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      console.log('[Hazards API] Route fetch aborted');
+      logger.log('[Hazards API] Route fetch aborted');
       throw error;
     }
-    console.log('[Hazards API] Route fetch error:', error);
+    logger.log('[Hazards API] Route fetch error:', error);
     throw error;
   }
 }

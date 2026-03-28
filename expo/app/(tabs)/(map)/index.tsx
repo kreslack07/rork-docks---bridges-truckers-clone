@@ -84,6 +84,9 @@ export default function MapScreen() {
   const [showVehiclePicker, setShowVehiclePicker] = useState<boolean>(false);
 
   const { filter, filteredDocks, filteredHazards, cycleFilter, filterLabel, clearFilter } = useMapFilters(docks, hazards);
+
+  const visibleDocks = useMemo(() => filteredDocks.slice(0, 200), [filteredDocks]);
+  const visibleHazards = useMemo(() => filteredHazards.slice(0, 200), [filteredHazards]);
   const { activeRoute, routeHazards, isRouting, routeToDock, clearRoute, userLocation, getUserLocation } = useMapRouting(profile, hazards, mapRef);
 
   const handleViewHazards = useCallback(() => {
@@ -99,9 +102,12 @@ export default function MapScreen() {
     router.push('/search');
   }, [router]);
 
+  const showVehiclePickerRef = useRef(showVehiclePicker);
+  showVehiclePickerRef.current = showVehiclePicker;
+
   const dismissVehiclePicker = useCallback(() => {
-    if (showVehiclePicker) setShowVehiclePicker(false);
-  }, [showVehiclePicker]);
+    if (showVehiclePickerRef.current) setShowVehiclePicker(false);
+  }, []);
 
   const handleToggleVehiclePicker = useCallback(() => {
     setShowVehiclePicker(prev => !prev);
@@ -283,10 +289,10 @@ export default function MapScreen() {
             <Marker coordinate={userLocation} title="Your Location" pinColor={colors.primary} />
           )}
 
-          {filteredDocks.map((dock) => (
+          {visibleDocks.map((dock) => (
             <DockMarkerItem key={dock.id} dock={dock} colors={colors} onPress={handleDockPress} />
           ))}
-          {filteredHazards.map((hazard) => (
+          {visibleHazards.map((hazard) => (
             <HazardMarkerItem key={hazard.id} hazard={hazard} colors={colors} profile={profile} onPress={handleHazardPress} />
           ))}
         </MapView>

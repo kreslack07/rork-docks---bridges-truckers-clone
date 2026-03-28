@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { X } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
@@ -11,7 +11,7 @@ interface FilterIndicatorProps {
 }
 
 function FilterIndicatorComponent({ colors, label, insetTop, onClear }: FilterIndicatorProps) {
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
     <View style={[styles.container, { top: insetTop + 12 }]}>

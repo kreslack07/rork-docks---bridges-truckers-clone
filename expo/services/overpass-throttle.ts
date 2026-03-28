@@ -1,3 +1,5 @@
+import { logger } from '@/utils/logger';
+
 const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -17,7 +19,7 @@ function getEndpoint(): string {
 function switchEndpoint(): void {
   const prev = currentEndpointIndex;
   currentEndpointIndex = (currentEndpointIndex + 1) % OVERPASS_ENDPOINTS.length;
-  console.log(`[Overpass] Switching endpoint from ${OVERPASS_ENDPOINTS[prev]} to ${OVERPASS_ENDPOINTS[currentEndpointIndex]}`);
+  logger.log(`[Overpass] Switching endpoint from ${OVERPASS_ENDPOINTS[prev]} to ${OVERPASS_ENDPOINTS[currentEndpointIndex]}`);
 }
 
 export function isRateLimited(): boolean {
@@ -35,7 +37,7 @@ export function resetOverpassState(): void {
   throttleLock = null;
   controllerRegistry.forEach(c => c.abort());
   controllerRegistry.clear();
-  console.log('[Overpass] State reset');
+  logger.log('[Overpass] State reset');
 }
 
 let lastOverpassCallTime = 0;
@@ -73,7 +75,7 @@ export async function throttledOverpassFetch(
   const elapsed = now - lastOverpassCallTime;
   if (elapsed < OVERPASS_MIN_INTERVAL_MS) {
     const waitMs = OVERPASS_MIN_INTERVAL_MS - elapsed;
-    console.log(`[${label}] Throttling Overpass call, waiting ${waitMs}ms`);
+    logger.log(`[${label}] Throttling Overpass call, waiting ${waitMs}ms`);
     let resolve: (() => void) | null = null;
     throttleLock = new Promise<void>(r => { resolve = r; });
     try {
@@ -95,7 +97,7 @@ export async function throttledOverpassFetch(
   }
 
   if (signal?.aborted) {
-    console.log(`[${label}] Aborted before fetch`);
+    logger.log(`[${label}] Aborted before fetch`);
     return null;
   }
 
@@ -112,11 +114,11 @@ export async function throttledOverpassFetch(
     });
   } catch (fetchError) {
     if (fetchError instanceof DOMException && fetchError.name === 'AbortError') {
-      console.log(`[${label}] Fetch aborted`);
+      logger.log(`[${label}] Fetch aborted`);
       return null;
     }
     consecutiveFailures++;
-    console.log(`[${label}] Network error (failures: ${consecutiveFailures}):`, fetchError);
+    logger.log(`[${label}] Network error (failures: ${consecutiveFailures}):`, fetchError);
     if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES_BEFORE_SWITCH) {
       switchEndpoint();
     }
@@ -125,7 +127,7 @@ export async function throttledOverpassFetch(
 
   if (response.status === 429 || response.status === 504) {
     consecutiveFailures++;
-    console.log(`[${label}] Overpass returned ${response.status} (failures: ${consecutiveFailures}), will retry`);
+    logger.log(`[${label}] Overpass returned ${response.status} (failures: ${consecutiveFailures}), will retry`);
 
     if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES_BEFORE_SWITCH) {
       switchEndpoint();
@@ -136,7 +138,7 @@ export async function throttledOverpassFetch(
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       if (signal?.aborted) return null;
       const retryEndpoint = getEndpoint();
-      console.log(`[${label}] Retry ${attempt}/${MAX_RETRIES} via ${retryEndpoint} after ${RETRY_DELAY_MS * attempt}ms`);
+      logger.log(`[${label}] Retry ${attempt}/${MAX_RETRIES} via ${retryEndpoint} after ${RETRY_DELAY_MS * attempt}ms`);
       await new Promise<void>((r) => setTimeout(r, RETRY_DELAY_MS * attempt));
       if (signal?.aborted) return null;
 
@@ -150,14 +152,14 @@ export async function throttledOverpassFetch(
         });
         if (retryResp.ok) {
           consecutiveFailures = 0;
-          console.log(`[${label}] Retry ${attempt} succeeded`);
+          logger.log(`[${label}] Retry ${attempt} succeeded`);
           return retryResp;
         }
         consecutiveFailures++;
-        console.log(`[${label}] Retry ${attempt} got status ${retryResp.status}`);
+        logger.log(`[${label}] Retry ${attempt} got status ${retryResp.status}`);
       } catch (retryErr) {
         consecutiveFailures++;
-        console.log(`[${label}] Retry ${attempt} failed:`, retryErr);
+        logger.log(`[${label}] Retry ${attempt} failed:`, retryErr);
       }
     }
     return null;
@@ -165,7 +167,7 @@ export async function throttledOverpassFetch(
 
   if (!response.ok) {
     consecutiveFailures++;
-    console.log(`[${label}] Overpass error ${response.status}`);
+    logger.log(`[${label}] Overpass error ${response.status}`);
     return null;
   }
 
