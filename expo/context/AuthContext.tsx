@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { useMutation } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
 import { trpcClient, setAuthToken, loadAuthToken, isBackendConfigured } from '@/lib/trpc';
@@ -29,14 +29,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     onSuccess: async (freshUser) => {
       if (freshUser) {
         setUser(freshUser);
-        await AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(freshUser));
+        await SecureStore.setItemAsync(AUTH_USER_KEY, JSON.stringify(freshUser));
         console.log('[Auth] Validated session with backend:', freshUser.email);
       }
     },
     onError: async () => {
       console.log('[Auth] Session expired or invalid, clearing');
       setAuthToken(null);
-      await AsyncStorage.removeItem(AUTH_USER_KEY);
+      await SecureStore.deleteItemAsync(AUTH_USER_KEY);
       setUser(null);
     },
     onSettled: () => {
@@ -52,7 +52,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       try {
         const token = await loadAuthToken();
         if (token) {
-          const cachedUser = await AsyncStorage.getItem(AUTH_USER_KEY);
+          const cachedUser = await SecureStore.getItemAsync(AUTH_USER_KEY);
           if (cachedUser) {
             const parsed = JSON.parse(cachedUser) as AuthUser;
             setUser(parsed);
@@ -79,7 +79,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       }
       const result = await trpcClient.auth.signUp.mutate({ email, password, displayName });
       setAuthToken(result.token);
-      await AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(result.user));
+      await SecureStore.setItemAsync(AUTH_USER_KEY, JSON.stringify(result.user));
       console.log('[Auth] Signed up via backend:', result.user.email);
       return result.user;
     },
@@ -93,7 +93,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       }
       const result = await trpcClient.auth.signIn.mutate({ email, password });
       setAuthToken(result.token);
-      await AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(result.user));
+      await SecureStore.setItemAsync(AUTH_USER_KEY, JSON.stringify(result.user));
       console.log('[Auth] Signed in via backend:', result.user.email);
       return result.user;
     },
@@ -110,7 +110,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         }
       }
       setAuthToken(null);
-      await AsyncStorage.removeItem(AUTH_USER_KEY);
+      await SecureStore.deleteItemAsync(AUTH_USER_KEY);
       console.log('[Auth] Signed out');
     },
     onSuccess: () => setUser(null),
@@ -123,7 +123,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       }
       await trpcClient.auth.deleteAccount.mutate();
       setAuthToken(null);
-      await AsyncStorage.removeItem(AUTH_USER_KEY);
+      await SecureStore.deleteItemAsync(AUTH_USER_KEY);
       console.log('[Auth] Account deleted');
     },
     onSuccess: () => setUser(null),

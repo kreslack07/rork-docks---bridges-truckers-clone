@@ -26,6 +26,8 @@ function MapFloatingActionsComponent({
         style={styles.reportsBadge}
         onPress={onViewHazards}
         activeOpacity={0.85}
+        accessibilityLabel={`${totalReports} reports around you. View hazards`}
+        accessibilityRole="button"
       >
         <View style={styles.reportsBadgeIcon}>
           <AlertTriangle size={16} color={colors.warning} />
@@ -41,6 +43,8 @@ function MapFloatingActionsComponent({
         onPress={onReportHazard}
         activeOpacity={0.85}
         testID="report-fab"
+        accessibilityLabel="Report a new hazard"
+        accessibilityRole="button"
       >
         <Plus size={22} color={colors.white} strokeWidth={3} />
       </TouchableOpacity>

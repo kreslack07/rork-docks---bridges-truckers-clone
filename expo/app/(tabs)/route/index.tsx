@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Linking,
+  Alert,
 } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import MapView from 'react-native-maps';
@@ -295,9 +296,22 @@ export default function RouteScreen() {
   }, [startNavigation, profile.height, profile.weight, profile.width, voiceActive, destination]);
 
   const handleStopNavigation = useCallback(() => {
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    stopSpeaking();
-    stopNavigation();
+    Alert.alert(
+      'Stop Navigation',
+      'Are you sure you want to stop navigating?',
+      [
+        { text: 'Keep Going', style: 'cancel' },
+        {
+          text: 'Stop',
+          style: 'destructive',
+          onPress: () => {
+            void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            stopSpeaking();
+            stopNavigation();
+          },
+        },
+      ],
+    );
   }, [stopNavigation]);
 
   const routeResult = liveRoute;

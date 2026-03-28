@@ -85,6 +85,12 @@ export default function ProfileScreen() {
         <Text style={styles.heroSubtitle}>
           Your truck details help us find the safest route
         </Text>
+        {profile.plateNumber ? (
+          <View style={styles.plateBadge}>
+            <Text style={styles.plateLabel}>REGO</Text>
+            <Text style={styles.plateValue}>{profile.plateNumber}</Text>
+          </View>
+        ) : null}
         {isOffline && (
           <View style={styles.offlineBadge}>
             <WifiOff size={12} color={colors.warning} />
@@ -111,6 +117,8 @@ export default function ProfileScreen() {
           onPress={() => router.push('/search')}
           activeOpacity={0.7}
           testID="profile-search-btn"
+          accessibilityLabel="Search docks and hazards"
+          accessibilityRole="button"
         >
           <Search size={18} color={colors.primary} />
           <Text style={styles.topActionText}>Search</Text>
@@ -120,12 +128,16 @@ export default function ProfileScreen() {
           onPress={() => router.push('/(tabs)/profile/settings')}
           activeOpacity={0.7}
           testID="profile-settings-btn"
+          accessibilityLabel="Open settings"
+          accessibilityRole="button"
         >
           <Settings size={18} color={colors.textSecondary} />
           <Text style={styles.topActionText}>Settings</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.helpBtn}
+          accessibilityLabel="Get help and support"
+          accessibilityRole="button"
           onPress={() => Alert.alert(
             'Need Help?',
             'For support, bug reports, or feedback:\n\nEmail: support@docksandbridges.com.au\n\nYou can also report issues directly in the app using the Report Hazard or Report Dock buttons.',
@@ -170,6 +182,8 @@ export default function ProfileScreen() {
           onPress={() => router.push('/report-hazard')}
           activeOpacity={0.7}
           testID="profile-report-hazard-btn"
+          accessibilityLabel="Report a hazard"
+          accessibilityRole="button"
         >
           <View style={[styles.quickActionIcon, { backgroundColor: colors.warning + '15' }]}>
             <AlertTriangle size={20} color={colors.warning} />
@@ -183,6 +197,8 @@ export default function ProfileScreen() {
           onPress={() => router.push('/report-dock')}
           activeOpacity={0.7}
           testID="profile-report-dock-btn"
+          accessibilityLabel="Report a dock"
+          accessibilityRole="button"
         >
           <View style={[styles.quickActionIcon, { backgroundColor: colors.primary + '15' }]}>
             <MapPin size={20} color={colors.primary} />
@@ -321,6 +337,30 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.success,
     fontSize: 12,
     fontWeight: '600' as const,
+  },
+  plateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginTop: 8,
+  },
+  plateLabel: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: '800' as const,
+    letterSpacing: 1,
+  },
+  plateValue: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '700' as const,
+    letterSpacing: 1.5,
   },
   quickActions: {
     flexDirection: 'row',

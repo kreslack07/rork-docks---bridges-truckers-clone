@@ -96,12 +96,12 @@ function MapDrawerComponent({
 
         <View style={styles.drawerDivider} />
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/(tabs)/route')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/(tabs)/route')} accessibilityLabel="Plan a drive" accessibilityRole="button">
           <Compass size={20} color={colors.textSecondary} />
           <Text style={styles.drawerItemText}>Plan a drive</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/(tabs)/hazards')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/(tabs)/hazards')} accessibilityLabel={`Hazards, ${hazardCount} total`} accessibilityRole="button">
           <AlertTriangle size={20} color={colors.textSecondary} />
           <Text style={styles.drawerItemText}>Hazards</Text>
           {hazardCount > 0 && (
@@ -111,24 +111,24 @@ function MapDrawerComponent({
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/report-hazard')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/report-hazard')} accessibilityLabel="Report hazard" accessibilityRole="button">
           <Plus size={20} color={colors.textSecondary} />
           <Text style={styles.drawerItemText}>Report hazard</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/report-dock')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/report-dock')} accessibilityLabel="Report dock" accessibilityRole="button">
           <MapPin size={20} color={colors.textSecondary} />
           <Text style={styles.drawerItemText}>Report dock</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/fleet-manage')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/fleet-manage')} accessibilityLabel="Fleet management" accessibilityRole="button">
           <Users size={20} color={colors.textSecondary} />
           <Text style={styles.drawerItemText}>Fleet</Text>
         </TouchableOpacity>
 
         <View style={styles.drawerDivider} />
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/(tabs)/profile')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/(tabs)/profile')} accessibilityLabel="Settings" accessibilityRole="button">
           <Settings size={20} color={colors.textSecondary} />
           <Text style={styles.drawerItemText}>Settings</Text>
         </TouchableOpacity>

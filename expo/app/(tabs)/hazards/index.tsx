@@ -10,7 +10,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, AlertTriangle, Zap, ArrowUpDown, Wifi, Shield, Weight } from 'lucide-react-native';
+import { Search, AlertTriangle, Zap, ArrowUpDown, Wifi, Shield, Weight, MapPin } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import { useLiveData } from '@/context/LiveDataContext';
@@ -20,8 +20,10 @@ import { Hazard, HazardFilter } from '@/types';
 import { ListSkeletonLoader } from '@/components/SkeletonLoader';
 import EmptyState from '@/components/EmptyState';
 import { getHazardColor as getHazardColorUtil, getHazardStatusLabel } from '@/utils/hazards';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import { haversineDistance } from '@/utils/geo';
 
-type SortMode = 'name' | 'height_asc' | 'height_desc' | 'city';
+type SortMode = 'nearest' | 'name' | 'height_asc' | 'height_desc' | 'city';
 
 export default function HazardsScreen() {
   const router = useRouter();
@@ -31,7 +33,8 @@ export default function HazardsScreen() {
   const { getConfirmedCount, getDisputedCount } = useCommunity();
   const [search, setSearch] = useState<string>('');
   const [filter, setFilter] = useState<HazardFilter>('all');
-  const [sortMode, setSortMode] = useState<SortMode>('name');
+  const [sortMode, setSortMode] = useState<SortMode>('nearest');
+  const { userLocation, getUserLocation } = useUserLocation();
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const handleRefresh = useCallback(async () => {
@@ -62,6 +65,17 @@ export default function HazardsScreen() {
     }
 
     switch (sortMode) {
+      case 'nearest':
+        if (userLocation) {
+          result = [...result].sort((a, b) => {
+            const distA = haversineDistance(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude);
+            const distB = haversineDistance(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude);
+            return distA - distB;
+          });
+        } else {
+          result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+        }
+        break;
       case 'height_asc':
         result = [...result].sort((a, b) => a.clearanceHeight - b.clearanceHeight);
         break;
@@ -76,7 +90,7 @@ export default function HazardsScreen() {
     }
 
     return result;
-  }, [search, filter, sortMode, hazards]);
+  }, [search, filter, sortMode, hazards, userLocation]);
 
   const liveCount = useMemo(() => hazards.filter(h => h.id.startsWith('osm-')).length, [hazards]);
 
@@ -92,15 +106,21 @@ export default function HazardsScreen() {
 
   const cycleSortMode = useCallback(() => {
     setSortMode((prev) => {
+      if (prev === 'nearest') return 'name';
       if (prev === 'name') return 'height_asc';
       if (prev === 'height_asc') return 'height_desc';
       if (prev === 'height_desc') return 'city';
-      return 'name';
+      return 'nearest';
     });
-  }, []);
+    if (sortMode === 'city' && !userLocation) {
+      void getUserLocation();
+    }
+  }, [sortMode, userLocation, getUserLocation]);
 
   const getSortLabel = useCallback(() => {
     switch (sortMode) {
+      case 'nearest':
+        return 'Nearest';
       case 'height_asc':
         return 'Height ↑';
       case 'height_desc':
@@ -164,9 +184,20 @@ export default function HazardsScreen() {
             testID="hazards-search-input"
           />
         </View>
-        <TouchableOpacity style={styles.sortBtn} onPress={cycleSortMode} activeOpacity={0.7} testID="hazards-sort-btn">
-          <ArrowUpDown size={14} color={colors.textSecondary} />
-          <Text style={styles.sortBtnText}>{getSortLabel()}</Text>
+        <TouchableOpacity
+          style={styles.sortBtn}
+          onPress={cycleSortMode}
+          activeOpacity={0.7}
+          testID="hazards-sort-btn"
+          accessibilityLabel={`Sort by ${getSortLabel()}`}
+          accessibilityRole="button"
+        >
+          {sortMode === 'nearest' ? (
+            <MapPin size={14} color={colors.primary} />
+          ) : (
+            <ArrowUpDown size={14} color={colors.textSecondary} />
+          )}
+          <Text style={[styles.sortBtnText, sortMode === 'nearest' && { color: colors.primary }]}>{getSortLabel()}</Text>
         </TouchableOpacity>
       </View>
 

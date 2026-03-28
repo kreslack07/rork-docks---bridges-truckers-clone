@@ -99,6 +99,8 @@ export default function RouteNavigationView({
           onPress={onToggleVoice}
           activeOpacity={0.7}
           testID="nav-voice-toggle"
+          accessibilityLabel={voiceActive ? 'Mute voice navigation' : 'Enable voice navigation'}
+          accessibilityRole="button"
         >
           {voiceActive ? (
             <Volume2 size={14} color={colors.primary} />
@@ -294,6 +296,8 @@ export default function RouteNavigationView({
             onPress={onStopNavigation}
             activeOpacity={0.7}
             testID="nav-stop-btn"
+            accessibilityLabel="End navigation"
+            accessibilityRole="button"
           >
             <Square size={16} color={colors.white} />
             <Text style={styles.stopNavBtnText}>End Navigation</Text>
@@ -303,6 +307,8 @@ export default function RouteNavigationView({
             onPress={onOpenInMaps}
             activeOpacity={0.7}
             testID="nav-open-maps-btn"
+            accessibilityLabel="Open in Maps"
+            accessibilityRole="button"
           >
             <ExternalLink size={16} color={colors.primary} />
           </TouchableOpacity>
@@ -311,6 +317,8 @@ export default function RouteNavigationView({
             onPress={onOpenInWaze}
             activeOpacity={0.7}
             testID="nav-open-waze-btn"
+            accessibilityLabel="Open in Waze"
+            accessibilityRole="button"
           >
             <Navigation size={16} color={colors.waze} />
           </TouchableOpacity>

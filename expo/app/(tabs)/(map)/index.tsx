@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Platform,
   Animated,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -224,6 +225,24 @@ export default function MapScreen() {
     void refetchHazards();
   }, [refetchDocks, refetchHazards]);
 
+  const handleStopNavigation = useCallback(() => {
+    Alert.alert(
+      'Stop Navigation',
+      'Are you sure you want to stop navigating?',
+      [
+        { text: 'Keep Going', style: 'cancel' },
+        {
+          text: 'Stop',
+          style: 'destructive',
+          onPress: () => {
+            stopNavigation();
+            void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          },
+        },
+      ],
+    );
+  }, [stopNavigation]);
+
   const isLoading = isLoadingDocks || isLoadingHazards;
 
   const loadingSpinAnim = useRef(new Animated.Value(0)).current;
@@ -313,11 +332,26 @@ export default function MapScreen() {
         </View>
       )}
 
+      {isOffline && (
+        <TouchableOpacity
+          style={[styles.offlineRetryBanner, { top: insets.top + 12 }]}
+          onPress={handleRefresh}
+          activeOpacity={0.8}
+          accessibilityLabel="Tap to retry loading data"
+          accessibilityRole="button"
+        >
+          <RefreshCw size={14} color={colors.warning} />
+          <Text style={styles.offlineRetryText}>Offline — Tap to retry</Text>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity
         style={[styles.hamburgerBtn, { top: insets.top + 12 }]}
         onPress={openDrawer}
         activeOpacity={0.8}
         testID="hamburger-menu"
+        accessibilityLabel="Open menu"
+        accessibilityRole="button"
       >
         <Menu size={20} color={colors.text} />
         {unreadCount > 0 && (
@@ -331,6 +365,8 @@ export default function MapScreen() {
           onPress={cycleFilter}
           activeOpacity={0.8}
           testID="filter-btn"
+          accessibilityLabel={`Filter: ${filterLabel}`}
+          accessibilityRole="button"
         >
           <Layers size={18} color={colors.textSecondary} />
         </TouchableOpacity>
@@ -339,6 +375,8 @@ export default function MapScreen() {
           onPress={handleRefresh}
           activeOpacity={0.8}
           testID="refresh-btn"
+          accessibilityLabel="Refresh map data"
+          accessibilityRole="button"
         >
           <RefreshCw size={18} color={colors.textSecondary} />
         </TouchableOpacity>
@@ -358,7 +396,7 @@ export default function MapScreen() {
           colors={colors}
           navProgress={navProgress}
           insetTop={insets.top}
-          onStop={stopNavigation}
+          onStop={handleStopNavigation}
         />
       )}
 
@@ -377,6 +415,8 @@ export default function MapScreen() {
         onPress={goToMyLocation}
         activeOpacity={0.8}
         testID="my-location-btn"
+        accessibilityLabel="Go to my location"
+        accessibilityRole="button"
       >
         <Locate size={20} color={colors.textSecondary} />
       </TouchableOpacity>
@@ -543,5 +583,29 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 12,
     fontWeight: '600' as const,
+  },
+  offlineRetryBanner: {
+    position: 'absolute',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.warning + '20',
+    borderWidth: 1,
+    borderColor: colors.warning + '40',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    zIndex: 10,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6 },
+      android: { elevation: 4 },
+      web: { boxShadow: '0 2px 6px rgba(0,0,0,0.15)' },
+    }),
+  },
+  offlineRetryText: {
+    color: colors.warning,
+    fontSize: 13,
+    fontWeight: '700' as const,
   },
 });

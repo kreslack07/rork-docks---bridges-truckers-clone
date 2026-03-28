@@ -41,7 +41,12 @@ function LiveNavBannerComponent({
           </Text>
         </View>
       </View>
-      <TouchableOpacity onPress={onStop} style={styles.liveNavStopBtn}>
+      <TouchableOpacity
+        onPress={onStop}
+        style={styles.liveNavStopBtn}
+        accessibilityLabel="Stop navigation"
+        accessibilityRole="button"
+      >
         <Square size={12} color={colors.white} />
       </TouchableOpacity>
     </View>

@@ -22,6 +22,8 @@ function MapBottomBarComponent({ colors, insetBottom, isLoading, isOffline, onSe
         onPress={onSearchPress}
         activeOpacity={0.9}
         testID="search-bar"
+        accessibilityLabel="Search for a destination"
+        accessibilityRole="button"
       >
         <Search size={18} color={colors.textMuted} />
         <Text style={styles.searchPlaceholder}>Where to?</Text>

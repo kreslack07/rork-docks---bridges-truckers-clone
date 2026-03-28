@@ -1,7 +1,7 @@
 import { httpLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import superjson from "superjson";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from 'expo-secure-store';
 
 import type { AppRouter } from "@/backend/trpc/app-router";
 
@@ -26,15 +26,15 @@ let cachedToken: string | null = null;
 export function setAuthToken(token: string | null) {
   cachedToken = token;
   if (token) {
-    AsyncStorage.setItem(AUTH_TOKEN_KEY, token).catch(() => {});
+    SecureStore.setItemAsync(AUTH_TOKEN_KEY, token).catch(() => {});
   } else {
-    AsyncStorage.removeItem(AUTH_TOKEN_KEY).catch(() => {});
+    SecureStore.deleteItemAsync(AUTH_TOKEN_KEY).catch(() => {});
   }
 }
 
 export async function loadAuthToken(): Promise<string | null> {
   try {
-    const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+    const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
     cachedToken = token;
     return token;
   } catch {
