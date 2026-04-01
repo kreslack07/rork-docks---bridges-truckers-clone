@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Docks & Bridges Truckers",
-    "slug": "docks-bridges-truckers-clone",
+    "slug": "docks-bridges-truckers",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.rork.docks-bridges-truckers-clone",
+      "bundleIdentifier": "app.rork.docks-bridges-truckers",
       "infoPlist": {
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs your location to provide truck route navigation, find nearby docks, and alert you to road hazards.",
         "NSLocationAlwaysUsageDescription": "This app uses your location in the background to provide turn-by-turn navigation and real-time hazard alerts while driving.",
@@ -30,7 +30,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0D1B2A"
       },
-      "package": "app.rork.docks_bridges_truckers_clone",
+      "package": "app.rork.docks_bridges_truckers",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",

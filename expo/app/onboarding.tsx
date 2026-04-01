@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -31,6 +31,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 import { TRUCK_TYPES } from '@/constants/categories';
 import { useTruckProfile } from '@/context/UserPreferencesContext';
 import { useOnboarding } from '@/context/OnboardingContext';
@@ -172,7 +173,7 @@ export default function OnboardingScreen() {
   }, [completeOnboarding, router]);
 
   const totalSteps = STEPS.length + 1;
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}>
