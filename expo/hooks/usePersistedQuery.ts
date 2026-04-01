@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const DEBOUNCE_MS = 300;
 
@@ -29,6 +29,8 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
     deserialize = JSON.parse,
   } = options;
 
+  const queryClient = useQueryClient();
+  const fullQueryKey = [...queryKey, key];
   const [value, setValue] = useState<T>(defaultValue);
 
   const query = useQuery({
@@ -59,6 +61,9 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
     mutationFn: async (newValue: T) => {
       await AsyncStorage.setItem(key, serialize(newValue));
       return newValue;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(fullQueryKey, data);
     },
   });
 
@@ -112,6 +117,8 @@ interface UsePersistedStringQueryOptions {
 export function usePersistedStringQuery(options: UsePersistedStringQueryOptions) {
   const { key, queryKey, defaultValue } = options;
 
+  const queryClient = useQueryClient();
+  const fullQueryKey = [...queryKey, key];
   const [value, setValue] = useState<string | null>(defaultValue);
 
   const query = useQuery({
@@ -139,7 +146,10 @@ export function usePersistedStringQuery(options: UsePersistedStringQueryOptions)
       }
       return newValue;
     },
-    onSuccess: (data) => setValue(data),
+    onSuccess: (data) => {
+      setValue(data);
+      queryClient.setQueryData(fullQueryKey, data);
+    },
   });
 
   const { mutate } = saveMutation;
@@ -164,6 +174,8 @@ export function usePersistedBoolQuery(options: {
 }) {
   const { key, queryKey, defaultValue } = options;
 
+  const queryClient = useQueryClient();
+  const fullQueryKey = [...queryKey, key];
   const [value, setValue] = useState<boolean>(defaultValue);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
@@ -190,7 +202,10 @@ export function usePersistedBoolQuery(options: {
       await AsyncStorage.setItem(key, String(newValue));
       return newValue;
     },
-    onSuccess: (data) => setValue(data),
+    onSuccess: (data) => {
+      setValue(data);
+      queryClient.setQueryData(fullQueryKey, data);
+    },
   });
 
   const removeMutation = useMutation({
@@ -198,7 +213,10 @@ export function usePersistedBoolQuery(options: {
       await AsyncStorage.removeItem(key);
       return defaultValue;
     },
-    onSuccess: (data) => setValue(data),
+    onSuccess: (data) => {
+      setValue(data);
+      queryClient.setQueryData(fullQueryKey, data);
+    },
   });
 
   const { mutate } = saveMutation;

@@ -205,7 +205,15 @@ export default function MapScreen() {
       clearTimeout(regionChangeTimer.current);
     }
     regionChangeTimer.current = setTimeout(() => {
-      updateMapCenter({ latitude: region.latitude, longitude: region.longitude });
+      updateMapCenter(
+        { latitude: region.latitude, longitude: region.longitude },
+        {
+          latitude: region.latitude,
+          longitude: region.longitude,
+          latitudeDelta: region.latitudeDelta,
+          longitudeDelta: region.longitudeDelta,
+        },
+      );
       regionChangeTimer.current = null;
     }, 400);
   }, [updateMapCenter]);

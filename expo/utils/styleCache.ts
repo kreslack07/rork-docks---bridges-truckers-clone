@@ -15,6 +15,7 @@ export function cachedStyles<T extends StyleSheet.NamedStyles<T>>(
   if (!innerMap) {
     innerMap = new Map();
     cache.set(factory, innerMap);
+    trackFactory(factory);
   }
   let styles = innerMap.get(colors);
   if (!styles) {
@@ -28,6 +29,20 @@ export function cachedStyles<T extends StyleSheet.NamedStyles<T>>(
   return styles as T;
 }
 
+const factoryRefs: WeakRef<StyleFactory<any>>[] = [];
+
+export function trackFactory(factory: StyleFactory<any>): void {
+  factoryRefs.push(new WeakRef(factory));
+}
+
 export function clearStyleCache(): void {
-  console.log('[StyleCache] Cache cleared');
+  for (const ref of factoryRefs) {
+    const factory = ref.deref();
+    if (factory) {
+      const innerMap = cache.get(factory);
+      if (innerMap) innerMap.clear();
+    }
+  }
+  factoryRefs.length = 0;
+  console.log('[StyleCache] Cache cleared — all theme entries evicted');
 }

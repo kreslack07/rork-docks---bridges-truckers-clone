@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { useMutation } from '@tanstack/react-query';
+
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
 import { trpc } from '@/lib/trpc';
 import {
@@ -113,34 +113,12 @@ function ReportDockScreenContent() {
     }
   }, []);
 
-  const reportMutation = trpc.docks.report.useMutation();
-
-  const submitMutation = useMutation({
-    mutationFn: async () => {
-      const payload = {
-        businessName: businessName.trim(),
-        dockName: dockName.trim() || undefined,
-        category,
-        dockType,
-        address: address.trim(),
-        city: city.trim() || undefined,
-        state: state.trim() || undefined,
-        operatingHours: operatingHours.trim() || undefined,
-        phone: phone.trim() || undefined,
-        accessNotes: accessNotes.trim() || undefined,
-        latitude: parseFloat(latStr),
-        longitude: parseFloat(lonStr),
-      };
-      console.log('[ReportDock] Submitting to backend:', payload);
-      const result = await reportMutation.mutateAsync(payload);
-      console.log('[ReportDock] Backend response:', result);
-      return { businessName: payload.businessName, address: payload.address };
-    },
-    onSuccess: (data) => {
+  const reportMutation = trpc.docks.report.useMutation({
+    onSuccess: (_data) => {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       addLocalNotification(
         'Dock Report Submitted',
-        `Your report for "${data.businessName}" at ${data.address} is being reviewed.`,
+        `Your report for "${businessName.trim()}" at ${address.trim()} is being reviewed.`,
         'dock',
       );
       Alert.alert(
@@ -154,8 +132,6 @@ function ReportDockScreenContent() {
       Alert.alert('Submission Failed', 'Could not submit your report. Please check your connection and try again.');
     },
   });
-
-  const { mutate: doSubmit } = submitMutation;
 
   const handleSubmit = useCallback(async () => {
     if (!businessName.trim()) {
@@ -196,8 +172,23 @@ function ReportDockScreenContent() {
     }
 
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    doSubmit();
-  }, [businessName, address, latStr, lonStr, phone, rateLimit, doSubmit]);
+    const payload = {
+      businessName: businessName.trim(),
+      dockName: dockName.trim() || undefined,
+      category,
+      dockType,
+      address: address.trim(),
+      city: city.trim() || undefined,
+      state: state.trim() || undefined,
+      operatingHours: operatingHours.trim() || undefined,
+      phone: phone.trim() || undefined,
+      accessNotes: accessNotes.trim() || undefined,
+      latitude: parseFloat(latStr),
+      longitude: parseFloat(lonStr),
+    };
+    console.log('[ReportDock] Submitting to backend:', payload);
+    reportMutation.mutate(payload);
+  }, [businessName, dockName, category, dockType, address, city, state, operatingHours, phone, accessNotes, latStr, lonStr, rateLimit, reportMutation]);
 
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -436,12 +427,12 @@ function ReportDockScreenContent() {
       )}
 
       <TouchableOpacity
-        style={[styles.submitBtn, (submitMutation.isPending || rateLimit.isLimited) && styles.submitBtnDisabled]}
+        style={[styles.submitBtn, (reportMutation.isPending || rateLimit.isLimited) && styles.submitBtnDisabled]}
         onPress={handleSubmit}
-        disabled={submitMutation.isPending || rateLimit.isLimited}
+        disabled={reportMutation.isPending || rateLimit.isLimited}
         activeOpacity={0.8}
       >
-        {submitMutation.isPending ? (
+        {reportMutation.isPending ? (
           <ActivityIndicator size="small" color={colors.background} />
         ) : (
           <>

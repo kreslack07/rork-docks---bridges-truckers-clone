@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { useMutation } from '@tanstack/react-query';
+
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
 import { trpc } from '@/lib/trpc';
 import {
@@ -100,31 +100,12 @@ function ReportHazardScreenContent() {
     }
   }, []);
 
-  const reportMutation = trpc.hazards.report.useMutation();
-
-  const submitMutation = useMutation({
-    mutationFn: async () => {
-      const payload = {
-        type,
-        name: name.trim(),
-        road: road.trim(),
-        city: city.trim() || undefined,
-        state: state.trim() || undefined,
-        clearanceHeight: parseFloat(heightStr),
-        latitude: parseFloat(latStr),
-        longitude: parseFloat(lonStr),
-        description: description.trim() || undefined,
-      };
-      console.log('[ReportHazard] Submitting to backend:', payload);
-      const result = await reportMutation.mutateAsync(payload);
-      console.log('[ReportHazard] Backend response:', result);
-      return { name: payload.name, road: payload.road };
-    },
-    onSuccess: (data) => {
+  const reportMutation = trpc.hazards.report.useMutation({
+    onSuccess: (_data) => {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       addLocalNotification(
         'Hazard Report Submitted',
-        `Your report for "${data.name}" on ${data.road} is being reviewed.`,
+        `Your report for "${name.trim()}" on ${road.trim()} is being reviewed.`,
         'hazard',
       );
       Alert.alert(
@@ -138,8 +119,6 @@ function ReportHazardScreenContent() {
       Alert.alert('Submission Failed', 'Could not submit your report. Please check your connection and try again.');
     },
   });
-
-  const { mutate: doSubmit } = submitMutation;
 
   const handleSubmit = useCallback(async () => {
     if (!name.trim()) {
@@ -181,8 +160,20 @@ function ReportHazardScreenContent() {
     }
 
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    doSubmit();
-  }, [name, road, heightStr, latStr, lonStr, rateLimit, doSubmit]);
+    const payload = {
+      type,
+      name: name.trim(),
+      road: road.trim(),
+      city: city.trim() || undefined,
+      state: state.trim() || undefined,
+      clearanceHeight: parseFloat(heightStr),
+      latitude: parseFloat(latStr),
+      longitude: parseFloat(lonStr),
+      description: description.trim() || undefined,
+    };
+    console.log('[ReportHazard] Submitting to backend:', payload);
+    reportMutation.mutate(payload);
+  }, [name, road, city, state, type, heightStr, latStr, lonStr, description, rateLimit, reportMutation]);
 
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -387,12 +378,12 @@ function ReportHazardScreenContent() {
       )}
 
       <TouchableOpacity
-        style={[styles.submitBtn, (submitMutation.isPending || rateLimit.isLimited) && styles.submitBtnDisabled]}
+        style={[styles.submitBtn, (reportMutation.isPending || rateLimit.isLimited) && styles.submitBtnDisabled]}
         onPress={handleSubmit}
-        disabled={submitMutation.isPending || rateLimit.isLimited}
+        disabled={reportMutation.isPending || rateLimit.isLimited}
         activeOpacity={0.8}
       >
-        {submitMutation.isPending ? (
+        {reportMutation.isPending ? (
           <ActivityIndicator size="small" color={colors.background} />
         ) : (
           <>

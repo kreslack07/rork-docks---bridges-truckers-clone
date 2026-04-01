@@ -41,17 +41,24 @@ const VERIFICATIONS_KEY = 'community_verifications';
 const REPORTS_KEY = 'community_reports';
 
 
+export interface MapRegionBounds {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+}
+
 const DEFAULT_LOCATION: RouteCoordinate = { latitude: -33.8688, longitude: 151.2093 };
 const CACHE_DOCKS_KEY = 'cached_docks';
 const CACHE_HAZARDS_KEY = 'cached_hazards';
 
-function getMockDocksNear(lat: number, lon: number, radiusKm: number = 50): Dock[] {
+function getMockDocksNear(lat: number, lon: number, radiusKm: number): Dock[] {
   return MOCK_DOCKS.filter(
     (d) => haversineDistance(lat, lon, d.latitude, d.longitude) < radiusKm,
   );
 }
 
-function getMockHazardsNear(lat: number, lon: number, radiusKm: number = 80): Hazard[] {
+function getMockHazardsNear(lat: number, lon: number, radiusKm: number): Hazard[] {
   return MOCK_HAZARDS.filter(
     (h) => haversineDistance(lat, lon, h.latitude, h.longitude) < radiusKm,
   );
@@ -150,10 +157,17 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   showToastRef.current = showToast;
   const queryClient = useQueryClient();
   const [mapCenter, setMapCenter] = useState<RouteCoordinate>(DEFAULT_LOCATION);
+  const [mapRegion, setMapRegion] = useState<MapRegionBounds>({
+    latitude: DEFAULT_LOCATION.latitude,
+    longitude: DEFAULT_LOCATION.longitude,
+    latitudeDelta: 30,
+    longitudeDelta: 30,
+  });
   const rateLimitRetryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const lat = Math.round(mapCenter.latitude * 100) / 100;
   const lon = Math.round(mapCenter.longitude * 100) / 100;
+  const radiusKm = Math.max(5, Math.min(100, mapRegion.latitudeDelta * 111 / 2));
 
   const cachedDocksQuery = useQuery({
     queryKey: ['cachedDocks'],
@@ -192,10 +206,11 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   }, []);
 
   const docksQuery = useQuery({
-    queryKey: ['docks', lat, lon],
+    queryKey: ['docks', lat, lon, radiusKm],
     queryFn: async ({ signal }) => {
-      logger.log('[LiveData] Fetching real docks near', lat.toFixed(3), lon.toFixed(3));
-      const mockDocks = getMockDocksNear(lat, lon);
+      const fetchRadius = Math.min(radiusKm, 50);
+      logger.log('[LiveData] Fetching real docks near', lat.toFixed(3), lon.toFixed(3), 'radius:', fetchRadius.toFixed(1), 'km');
+      const mockDocks = getMockDocksNear(lat, lon, fetchRadius);
 
       if (isRateLimited()) {
         logger.log('[LiveData] API rate limited — returning mock docks only');
@@ -204,7 +219,7 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
       }
 
       try {
-        const realDocks = await searchDocksNearby(lat, lon, 20, signal);
+        const realDocks = await searchDocksNearby(lat, lon, fetchRadius, signal);
         if (realDocks.length > 0) {
           const merged = mergeWithMockData(realDocks, mockDocks);
           logger.log('[LiveData] Merged docks: API', realDocks.length, '+ mock', mockDocks.length, '= total', merged.length);
@@ -226,10 +241,11 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   });
 
   const hazardsQuery = useQuery({
-    queryKey: ['hazards', lat, lon],
+    queryKey: ['hazards', lat, lon, radiusKm],
     queryFn: async ({ signal }) => {
-      logger.log('[LiveData] Fetching real hazards near', lat.toFixed(3), lon.toFixed(3));
-      const mockHazards = getMockHazardsNear(lat, lon);
+      const fetchRadius = Math.min(radiusKm * 1.5, 80);
+      logger.log('[LiveData] Fetching real hazards near', lat.toFixed(3), lon.toFixed(3), 'radius:', fetchRadius.toFixed(1), 'km');
+      const mockHazards = getMockHazardsNear(lat, lon, fetchRadius);
 
       if (isRateLimited()) {
         logger.log('[LiveData] API rate limited — returning mock hazards only');
@@ -238,7 +254,7 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
       }
 
       try {
-        const realHazards = await fetchHazardsInArea(lat, lon, 40, signal);
+        const realHazards = await fetchHazardsInArea(lat, lon, fetchRadius, signal);
         if (realHazards.length > 0) {
           const merged = mergeWithMockData(realHazards, mockHazards);
           logger.log('[LiveData] Merged hazards: API', realHazards.length, '+ mock', mockHazards.length, '= total', merged.length);
@@ -357,13 +373,13 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
 
     if (toastKey === 'offline') {
       logger.log('[LiveData] Both queries failed — falling back to mock + cached data');
-      const mockDocks = getMockDocksNear(lat, lon);
+      const mockDocks = getMockDocksNear(lat, lon, radiusKm);
       if (mockDocks.length > 0) {
         queryClient.setQueryData(['cachedDocks'], (prev: Dock[] | undefined) =>
           prev && prev.length > 0 ? prev : mockDocks
         );
       }
-      const mockHazards = getMockHazardsNear(lat, lon);
+      const mockHazards = getMockHazardsNear(lat, lon, radiusKm);
       if (mockHazards.length > 0) {
         queryClient.setQueryData(['cachedHazards'], (prev: Hazard[] | undefined) =>
           prev && prev.length > 0 ? prev : mockHazards
@@ -371,31 +387,34 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
       }
       showToastRef.current('warning', 'Offline Mode', 'Using cached & local data — check your connection');
     } else if (toastKey === 'docks-error') {
-      const fallbackDocks = getMockDocksNear(lat, lon);
+      const fallbackDocks = getMockDocksNear(lat, lon, radiusKm);
       if (fallbackDocks.length > 0 && allDocksRef.current.length === 0) {
         queryClient.setQueryData(['cachedDocks'], fallbackDocks);
       }
       showToastRef.current('warning', 'Limited Dock Data', 'Live data unavailable — showing known docks');
     } else if (toastKey === 'hazards-error') {
-      const fallbackHazards = getMockHazardsNear(lat, lon);
+      const fallbackHazards = getMockHazardsNear(lat, lon, radiusKm);
       if (fallbackHazards.length > 0 && allHazardsRef.current.length === 0) {
         queryClient.setQueryData(['cachedHazards'], fallbackHazards);
       }
       showToastRef.current('warning', 'Limited Hazard Data', 'Live data unavailable — showing known hazards');
     }
-  }, [docksError, hazardsError, lat, lon, queryClient]);
+  }, [docksError, hazardsError, lat, lon, radiusKm, queryClient]);
 
   const mapCenterRef = useRef<RouteCoordinate>(DEFAULT_LOCATION);
   useEffect(() => {
     mapCenterRef.current = mapCenter;
   }, [mapCenter]);
 
-  const updateMapCenter = useCallback((coord: RouteCoordinate) => {
+  const updateMapCenter = useCallback((coord: RouteCoordinate, region?: MapRegionBounds) => {
     const current = mapCenterRef.current;
     const dist = Math.abs(coord.latitude - current.latitude) + Math.abs(coord.longitude - current.longitude);
     if (dist > 0.2) {
       logger.log('[LiveData] Map center updated, will refetch');
       setMapCenter(coord);
+    }
+    if (region) {
+      setMapRegion(region);
     }
   }, []);
 
