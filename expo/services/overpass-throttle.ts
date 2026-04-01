@@ -19,31 +19,20 @@ interface OverpassState {
 }
 
 function getOrCreateState(): OverpassState {
-  if (__DEV__) {
-    const g = globalThis as Record<string, unknown>;
-    if (g.__OVERPASS_STATE__) {
-      return g.__OVERPASS_STATE__ as OverpassState;
-    }
-    const state: OverpassState = {
-      currentEndpointIndex: 0,
-      consecutiveFailures: 0,
-      lastOverpassCallTime: 0,
-      throttleLock: null,
-      controllerRegistry: new Map(),
-    };
-    g.__OVERPASS_STATE__ = state;
-    return state;
+  const g = globalThis as Record<string, unknown>;
+  if (g.__OVERPASS_STATE__) {
+    return g.__OVERPASS_STATE__ as OverpassState;
   }
-  return _state;
+  const s: OverpassState = {
+    currentEndpointIndex: 0,
+    consecutiveFailures: 0,
+    lastOverpassCallTime: 0,
+    throttleLock: null,
+    controllerRegistry: new Map(),
+  };
+  g.__OVERPASS_STATE__ = s;
+  return s;
 }
-
-const _state: OverpassState = {
-  currentEndpointIndex: 0,
-  consecutiveFailures: 0,
-  lastOverpassCallTime: 0,
-  throttleLock: null,
-  controllerRegistry: new Map(),
-};
 
 const state = getOrCreateState();
 

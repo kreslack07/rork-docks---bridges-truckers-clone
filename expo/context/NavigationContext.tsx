@@ -151,7 +151,7 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
 
     setNavProgress(progress);
 
-    if (progress.isOffRoute && navRefs.current.destination && !isReroutePendingRef.current) {
+    if (progress.isOffRoute && navRefs.current.destination && !isReroutePendingRef.current && !navRefs.current.hasArrived) {
       logger.log('[Navigation] Off route detected, rerouting...');
       doRerouteMutateRef.current({
         origin: { latitude: pos.latitude, longitude: pos.longitude },
@@ -164,11 +164,11 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
 
     if (progress.completionPercent >= 98 && !navRefs.current.hasArrived) {
       navRefs.current.hasArrived = true;
+      navRefs.current.destination = null;
       logger.log('[Navigation] Destination reached — auto-stopping navigation');
       stopLocationTracking();
       setIsNavigating(false);
       setNavProgress(progress);
-      navRefs.current.destination = null;
       showToastRef.current('success', 'Arrived!', 'You have reached your destination');
     }
   }, []);

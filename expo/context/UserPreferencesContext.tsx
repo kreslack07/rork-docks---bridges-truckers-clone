@@ -135,9 +135,6 @@ export function useUnits() {
   }), [unitSystem, setUnitSystem, isMetric, formatHeight, formatWeight, formatDistance, heightUnit, weightUnit, distanceUnit]);
 }
 
-export function useFleet() {
-  const { useFleet: useFleetFromCtx } = require('@/context/FleetContext');
-  return useFleetFromCtx();
-}
+export { useFleet } from '@/context/FleetContext';
 
 export { useFavourites } from '@/context/FavouritesContext';

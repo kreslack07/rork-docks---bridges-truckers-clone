@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -40,7 +40,7 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
   } = options;
 
   const queryClient = useQueryClient();
-  const fullQueryKey = [...queryKey, key];
+  const fullQueryKey = useMemo(() => [...queryKey, key], [queryKey, key]);
   const [value, setValue] = useState<T>(defaultValue);
 
   const query = useQuery({
@@ -164,7 +164,7 @@ export function usePersistedStringQuery(options: UsePersistedStringQueryOptions)
   const { key, queryKey, defaultValue } = options;
 
   const queryClient = useQueryClient();
-  const fullQueryKey = [...queryKey, key];
+  const fullQueryKey = useMemo(() => [...queryKey, key], [queryKey, key]);
   const [value, setValue] = useState<string | null>(defaultValue);
 
   const query = useQuery({
@@ -221,7 +221,7 @@ export function usePersistedBoolQuery(options: {
   const { key, queryKey, defaultValue } = options;
 
   const queryClient = useQueryClient();
-  const fullQueryKey = [...queryKey, key];
+  const fullQueryKey = useMemo(() => [...queryKey, key], [queryKey, key]);
   const [value, setValue] = useState<boolean>(defaultValue);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 

@@ -76,15 +76,4 @@ export interface RouteStep {
   maneuver: string;
 }
 
-export interface LiveRoute {
-  coordinates: RouteCoordinate[];
-  distance: number;
-  duration: number;
-  steps: RouteStep[];
-  hazardsOnRoute: Hazard[];
-  blockedHazards: Hazard[];
-  tightHazards: Hazard[];
-  safeHazards: Hazard[];
-}
-
 export type HazardFilter = 'all' | 'bridge' | 'wire' | 'weight_limit';

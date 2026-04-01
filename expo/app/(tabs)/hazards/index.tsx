@@ -121,7 +121,7 @@ export default function HazardsScreen() {
     });
   }, [userLocation, getUserLocation]);
 
-  const getSortLabel = useCallback(() => {
+  const sortLabel = useMemo(() => {
     switch (sortMode) {
       case 'nearest':
         return 'Nearest';
@@ -195,7 +195,7 @@ export default function HazardsScreen() {
           onPress={cycleSortMode}
           activeOpacity={0.7}
           testID="hazards-sort-btn"
-          accessibilityLabel={`Sort by ${getSortLabel()}`}
+          accessibilityLabel={`Sort by ${sortLabel}`}
           accessibilityRole="button"
         >
           {sortMode === 'nearest' ? (
@@ -203,7 +203,7 @@ export default function HazardsScreen() {
           ) : (
             <ArrowUpDown size={14} color={colors.textSecondary} />
           )}
-          <Text style={[styles.sortBtnText, sortMode === 'nearest' && { color: colors.primary }]}>{getSortLabel()}</Text>
+          <Text style={[styles.sortBtnText, sortMode === 'nearest' && { color: colors.primary }]}>{sortLabel}</Text>
         </TouchableOpacity>
       </View>
 

@@ -88,5 +88,3 @@ export const LightTheme: ThemeColors = {
   waze: '#33ccff',
 };
 
-const Colors = DarkTheme;
-export default Colors;

@@ -8,6 +8,7 @@ import { NotificationsProvider } from '@/context/NotificationsContext';
 import { LiveDataProvider } from '@/context/LiveDataContext';
 import { MapViewportProvider } from '@/context/MapViewportContext';
 import { NavigationProvider } from '@/context/NavigationContext';
+import { FleetProvider } from '@/context/FleetContext';
 import { ToastProvider } from '@/context/ToastContext';
 
 type ProviderComponent = FunctionComponent<{ children: ReactNode }>;
@@ -28,6 +29,7 @@ const ComposedProviders = composeProviders([
   NotificationsProvider,
   UserPreferencesProvider,
   FavouritesProvider,
+  FleetProvider,
   MapViewportProvider,
   LiveDataProvider,
   NavigationProvider,

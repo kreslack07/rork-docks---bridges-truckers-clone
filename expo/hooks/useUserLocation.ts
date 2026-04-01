@@ -20,11 +20,13 @@ export function useUserLocation() {
   const promptOpenSettings = useCallback(() => {
     Alert.alert(
       'Location Access Required',
-      'This app needs your location to calculate truck-safe routes and show nearby hazards. Please enable location access in your device settings.',
+      Platform.OS === 'web'
+        ? 'This app needs your location to calculate truck-safe routes and show nearby hazards. Please allow location access in your browser when prompted.'
+        : 'This app needs your location to calculate truck-safe routes and show nearby hazards. Please enable location access in your device settings.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Open Settings',
+          text: Platform.OS === 'web' ? 'OK' : 'Open Settings',
           onPress: () => {
             if (Platform.OS === 'ios') {
               void Linking.openURL('app-settings:');
