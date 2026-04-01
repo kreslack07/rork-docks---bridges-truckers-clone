@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
 import {
   View,
@@ -18,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 
 function AuthScreenContent() {
   const router = useRouter();
@@ -53,7 +54,7 @@ function AuthScreenContent() {
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
       if (mode === 'signup') {
@@ -61,14 +62,14 @@ function AuthScreenContent() {
       } else {
         await signIn({ email: email.trim(), password });
       }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Something went wrong.');
     }
   }, [email, password, displayName, mode, signIn, signUp, validateEmail, router]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <KeyboardAvoidingView
