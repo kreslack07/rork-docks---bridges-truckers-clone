@@ -4,6 +4,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const DEBOUNCE_MS = 300;
 
+const mountVersions = new Map<string, number>();
+function nextMountVersion(key: string): number {
+  const v = (mountVersions.get(key) ?? 0) + 1;
+  mountVersions.set(key, v);
+  return v;
+}
+function getMountVersion(key: string): number {
+  return mountVersions.get(key) ?? 0;
+}
+
 interface UsePersistedQueryOptions<T> {
   key: string;
   queryKey: string[];
@@ -75,8 +85,12 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
   serializeRef.current = serialize;
   const keyRef = useRef(key);
   keyRef.current = key;
+  const mountVersionRef = useRef<number>(0);
 
   useEffect(() => {
+    const version = nextMountVersion(key);
+    mountVersionRef.current = version;
+
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
@@ -86,13 +100,20 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
         const pendingValue = pendingValueRef.current;
         const currentKey = keyRef.current;
         const currentSerialize = serializeRef.current;
+        const capturedVersion = version;
         pendingValueRef.current = null;
         try {
           const serialized = currentSerialize(pendingValue);
-          void AsyncStorage.setItem(currentKey, serialized).catch((e) => {
+          void AsyncStorage.setItem(currentKey, serialized).then(() => {
+            if (getMountVersion(currentKey) !== capturedVersion) {
+              console.log('[usePersistedQuery] Skipped stale flush for key:', currentKey);
+            }
+          }).catch((e) => {
             console.log('[usePersistedQuery] Flush on unmount failed:', e);
           });
-          queryClient.setQueryData(fullQueryKey, pendingValue);
+          if (getMountVersion(currentKey) === capturedVersion) {
+            queryClient.setQueryData(fullQueryKey, pendingValue);
+          }
         } catch (e) {
           console.log('[usePersistedQuery] Flush serialize error:', e);
         }

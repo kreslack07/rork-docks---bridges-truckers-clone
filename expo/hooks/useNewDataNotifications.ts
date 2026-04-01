@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { Dock, Hazard } from '@/types';
 import { useNotifications } from '@/context/NotificationsContext';
+import { useTruckProfile } from '@/context/UserPreferencesContext';
 import { logger } from '@/utils/logger';
 
 export function useNewDataNotifications(allHazards: Hazard[], allDocks: Dock[]) {
   const { addLocalNotification, prefs } = useNotifications();
+  const { profile } = useTruckProfile();
+  const truckHeightRef = useRef(profile.height);
+  truckHeightRef.current = profile.height;
 
   const prevHazardIdsRef = useRef<Set<string>>(new Set());
   const prevDockIdsRef = useRef<Set<string>>(new Set());
@@ -21,7 +25,7 @@ export function useNewDataNotifications(allHazards: Hazard[], allDocks: Dock[]) 
     if (prevIds.size > 0 && prefsRef.current.hazardAlerts) {
       const newHazards = allHazards.filter(h => !prevIds.has(h.id));
       if (newHazards.length > 0 && newHazards.length <= 10) {
-        const blocked = newHazards.filter(h => h.clearanceHeight < 4.3);
+        const blocked = newHazards.filter(h => h.clearanceHeight < truckHeightRef.current);
         if (blocked.length > 0) {
           addLocalNotificationRef.current(
             'New Hazards Detected',
