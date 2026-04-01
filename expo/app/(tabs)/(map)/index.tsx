@@ -40,7 +40,7 @@ import RouteBanner from '@/components/map/RouteBanner';
 import FilterIndicator from '@/components/map/FilterIndicator';
 import MapBottomBar from '@/components/map/MapBottomBar';
 import MapFloatingActions from '@/components/map/MapFloatingActions';
-import { DockMarkerItem, HazardMarkerItem } from '@/components/map/MapMarkers';
+import { MapMarkerList } from '@/components/map/MapMarkers';
 import { useMapFilters } from '@/hooks/useMapFilters';
 import { useMapRouting } from '@/hooks/useMapRouting';
 import { getHazardColor as getHazardColorUtil } from '@/utils/hazards';
@@ -89,11 +89,16 @@ export default function MapScreen() {
 
   const { filter, filteredDocks, filteredHazards, cycleFilter, filterLabel, clearFilter } = useMapFilters(docks, hazards);
 
-  const MARKER_LIMIT = 200;
-  const visibleDocks = useMemo(() => filteredDocks.length <= MARKER_LIMIT ? filteredDocks : filteredDocks.slice(0, MARKER_LIMIT), [filteredDocks]);
-  const visibleHazards = useMemo(() => filteredHazards.length <= MARKER_LIMIT ? filteredHazards : filteredHazards.slice(0, MARKER_LIMIT), [filteredHazards]);
-  const isMarkersCapped = filteredDocks.length > MARKER_LIMIT || filteredHazards.length > MARKER_LIMIT;
-  const hiddenCount = Math.max(0, filteredDocks.length - MARKER_LIMIT) + Math.max(0, filteredHazards.length - MARKER_LIMIT);
+  const [mapZoomDelta, setMapZoomDelta] = useState<number>(30);
+  const markerLimit = useMemo(() => {
+    if (mapZoomDelta < 0.05) return 300;
+    if (mapZoomDelta < 0.2) return 200;
+    return 120;
+  }, [mapZoomDelta]);
+  const visibleDocks = useMemo(() => filteredDocks.length <= markerLimit ? filteredDocks : filteredDocks.slice(0, markerLimit), [filteredDocks, markerLimit]);
+  const visibleHazards = useMemo(() => filteredHazards.length <= markerLimit ? filteredHazards : filteredHazards.slice(0, markerLimit), [filteredHazards, markerLimit]);
+  const isMarkersCapped = filteredDocks.length > markerLimit || filteredHazards.length > markerLimit;
+  const hiddenCount = Math.max(0, filteredDocks.length - markerLimit) + Math.max(0, filteredHazards.length - markerLimit);
   const { activeRoute, routeHazards, isRouting, routeToDock, clearRoute, userLocation, getUserLocation } = useMapRouting(profile, hazards, mapRef);
 
   const handleViewHazards = useCallback(() => {
@@ -207,6 +212,7 @@ export default function MapScreen() {
       clearTimeout(regionChangeTimer.current);
     }
     regionChangeTimer.current = setTimeout(() => {
+      setMapZoomDelta(region.latitudeDelta);
       updateMapCenter(
         { latitude: region.latitude, longitude: region.longitude },
         {
@@ -217,7 +223,7 @@ export default function MapScreen() {
         },
       );
       regionChangeTimer.current = null;
-    }, 400);
+    }, 500);
   }, [updateMapCenter]);
 
   const goToMyLocation = useCallback(async () => {
@@ -326,12 +332,14 @@ export default function MapScreen() {
             <Marker coordinate={userLocation} title="Your Location" pinColor={colors.primary} />
           )}
 
-          {visibleDocks.map((dock) => (
-            <DockMarkerItem key={dock.id} dock={dock} colors={colors} onPress={handleDockPress} />
-          ))}
-          {visibleHazards.map((hazard) => (
-            <HazardMarkerItem key={hazard.id} hazard={hazard} colors={colors} profile={profile} onPress={handleHazardPress} />
-          ))}
+          <MapMarkerList
+            docks={visibleDocks}
+            hazards={visibleHazards}
+            colors={colors}
+            profile={profile}
+            onDockPress={handleDockPress}
+            onHazardPress={handleHazardPress}
+          />
         </MapView>
 
       {isFirstLoad && (

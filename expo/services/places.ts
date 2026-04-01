@@ -139,7 +139,7 @@ export async function searchDocksNearby(
       node["shop"="department_store"](around:${radiusM},${lat},${lon});
       way["shop"="department_store"](around:${radiusM},${lat},${lon});
     );
-    out center 80;
+    out center 60;
   `;
 
   try {

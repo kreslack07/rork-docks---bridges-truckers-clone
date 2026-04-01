@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { useMutation } from '@tanstack/react-query';
+
 import { useRouter } from 'expo-router';
 import { Search, AlertTriangle, Zap, ArrowUpDown, Wifi, Shield, Weight, MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -38,15 +38,16 @@ export default function HazardsScreen() {
   const [filter, setFilter] = useState<HazardFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('nearest');
   const { userLocation, getUserLocation } = useUserLocation();
-  const refreshMutation = useMutation({
-    mutationFn: async () => {
-      await refetchHazards();
-    },
-  });
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  const handleRefresh = useCallback(() => {
-    refreshMutation.mutate();
-  }, [refreshMutation]);
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refetchHazards();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetchHazards]);
 
   const filteredHazards = useMemo(() => {
     let result = hazards;
@@ -275,7 +276,7 @@ export default function HazardsScreen() {
         updateCellsBatchingPeriod={50}
         refreshControl={
           <RefreshControl
-            refreshing={refreshMutation.isPending}
+            refreshing={isRefreshing}
             onRefresh={handleRefresh}
             tintColor={colors.primary}
             colors={[colors.primary]}

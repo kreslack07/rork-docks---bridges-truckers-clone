@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
 import { usePersistedQuery } from '@/hooks/usePersistedQuery';
 
@@ -78,7 +76,6 @@ async function registerForPushNotifications(): Promise<string | null> {
 }
 
 export const [NotificationsProvider, useNotifications] = createContextHook(() => {
-  const queryClient = useQueryClient();
 
   const prefsPersisted = usePersistedQuery<NotificationPrefs>({
     key: NOTIF_PREFS_KEY,
@@ -155,14 +152,6 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
     };
   }, []);
 
-  const clearHistoryMutation = useMutation({
-    mutationFn: async () => {
-      await AsyncStorage.removeItem(NOTIF_HISTORY_KEY);
-    },
-  });
-
-  const { mutate: mutateClearHistory } = clearHistoryMutation;
-
   const updatePrefs = useCallback((updates: Partial<NotificationPrefs>) => {
     updatePrefsValue(prev => ({ ...prev, ...updates }));
   }, [updatePrefsValue]);
@@ -214,8 +203,7 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
 
   const clearNotifications = useCallback(() => {
     setHistoryValue([]);
-    queryClient.setQueryData(['notificationHistory', NOTIF_HISTORY_KEY], () => []);
-  }, [setHistoryValue, queryClient]);
+  }, [setHistoryValue]);
 
   const unreadCount = useMemo(() => historyPersisted.value.filter(n => !n.read).length, [historyPersisted.value]);
 

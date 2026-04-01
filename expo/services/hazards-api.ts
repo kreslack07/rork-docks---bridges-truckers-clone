@@ -134,7 +134,7 @@ export async function fetchHazardsInArea(
       way["maxweight"](around:${radiusM},${lat},${lon});
       node["maxweight"](around:${radiusM},${lat},${lon});
     );
-    out center 150;
+    out center 120;
   `;
 
   try {
@@ -212,7 +212,7 @@ export async function fetchHazardsAlongRoute(
       way["maxweight"](${minLat},${minLon},${maxLat},${maxLon});
       node["maxweight"](${minLat},${minLon},${maxLat},${maxLon});
     );
-    out center 200;
+    out center 150;
   `;
 
   try {

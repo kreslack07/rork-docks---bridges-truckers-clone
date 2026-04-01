@@ -41,14 +41,18 @@ function mergeWithMockData<T extends { id: string; latitude: number; longitude: 
   apiData: T[],
   mockData: T[],
 ): T[] {
-  const seen = new Set(apiData.map((item) => item.id));
-  const coordSeen = new Set(
-    apiData.map((item) => `${item.latitude.toFixed(4)}-${item.longitude.toFixed(4)}`),
-  );
+  if (mockData.length === 0) return apiData;
+  if (apiData.length === 0) return mockData;
+
+  const seen = new Set<string>();
+  for (const item of apiData) {
+    seen.add(item.id);
+    seen.add(`${(item.latitude * 10000 | 0)}_${(item.longitude * 10000 | 0)}`);
+  }
   const merged = [...apiData];
   for (const mock of mockData) {
-    const coordKey = `${mock.latitude.toFixed(4)}-${mock.longitude.toFixed(4)}`;
-    if (!seen.has(mock.id) && !coordSeen.has(coordKey)) {
+    const coordKey = `${(mock.latitude * 10000 | 0)}_${(mock.longitude * 10000 | 0)}`;
+    if (!seen.has(mock.id) && !seen.has(coordKey)) {
       merged.push(mock);
     }
   }
@@ -123,9 +127,9 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   });
   const rateLimitRetryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const lat = Math.round(mapCenter.latitude * 100) / 100;
-  const lon = Math.round(mapCenter.longitude * 100) / 100;
-  const radiusKm = Math.max(5, Math.min(100, mapRegion.latitudeDelta * 111 / 2));
+  const lat = Math.round(mapCenter.latitude * 50) / 50;
+  const lon = Math.round(mapCenter.longitude * 50) / 50;
+  const radiusKm = Math.max(5, Math.min(80, mapRegion.latitudeDelta * 111 / 2));
 
   const cachedDocksQuery = useQuery({
     queryKey: ['cachedDocks'],
@@ -315,17 +319,20 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
 
   const updateMapCenter = useCallback((coord: RouteCoordinate, region?: MapRegionBounds) => {
     const current = mapCenterRef.current;
-    const dist = Math.abs(coord.latitude - current.latitude) + Math.abs(coord.longitude - current.longitude);
-    const panChanged = dist > 0.2;
+    const latDiff = Math.abs(coord.latitude - current.latitude);
+    const lonDiff = Math.abs(coord.longitude - current.longitude);
+    const panChanged = latDiff + lonDiff > 0.15;
 
     let zoomChanged = false;
     if (region) {
       const zoomRatio = region.latitudeDelta / prevZoomRef.current;
-      zoomChanged = zoomRatio < 0.7 || zoomRatio > 1.4;
+      zoomChanged = zoomRatio < 0.6 || zoomRatio > 1.5;
       if (zoomChanged) {
         prevZoomRef.current = region.latitudeDelta;
       }
-      setMapRegion(region);
+      if (panChanged || zoomChanged) {
+        setMapRegion(region);
+      }
     }
 
     if (panChanged || zoomChanged) {

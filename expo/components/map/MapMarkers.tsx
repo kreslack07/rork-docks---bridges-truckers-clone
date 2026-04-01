@@ -22,15 +22,20 @@ interface DockMarkerProps {
   onPress: (dock: Dock) => void;
 }
 
+const DOCK_ANCHOR = { x: 0.5, y: 0.5 } as const;
+
 export const DockMarkerItem = memo(function DockMarkerItem({ dock, colors, onPress }: DockMarkerProps) {
   const styles = getSharedStyles(colors);
   const handlePress = useCallback(() => onPress(dock), [onPress, dock]);
+  const coordinate = useMemo(() => ({ latitude: dock.latitude, longitude: dock.longitude }), [dock.latitude, dock.longitude]);
   return (
     <Marker
-      coordinate={{ latitude: dock.latitude, longitude: dock.longitude }}
+      coordinate={coordinate}
       title={dock.name}
       description={dock.business}
       onPress={handlePress}
+      tracksViewChanges={false}
+      anchor={DOCK_ANCHOR}
     >
       <View style={styles.dockMarker}>
         <MapPin size={14} color={colors.white} />
@@ -46,10 +51,13 @@ interface HazardMarkerProps {
   onPress: (hazard: Hazard) => void;
 }
 
+const HAZARD_ANCHOR = { x: 0.5, y: 0.5 } as const;
+
 export const HazardMarkerItem = memo(function HazardMarkerItem({ hazard, colors, profile, onPress }: HazardMarkerProps) {
   const styles = getSharedStyles(colors);
   const hazardColor = useMemo(() => getHazardColor(hazard, profile, colors), [hazard, profile, colors]);
   const handlePress = useCallback(() => onPress(hazard), [onPress, hazard]);
+  const coordinate = useMemo(() => ({ latitude: hazard.latitude, longitude: hazard.longitude }), [hazard.latitude, hazard.longitude]);
   const description = useMemo(() => {
     if (hazard.type === 'weight_limit') return `${hazard.weightLimit}t weight limit`;
     if (hazard.clearanceHeight < 90) return `${hazard.clearanceHeight}m clearance`;
@@ -58,10 +66,12 @@ export const HazardMarkerItem = memo(function HazardMarkerItem({ hazard, colors,
 
   return (
     <Marker
-      coordinate={{ latitude: hazard.latitude, longitude: hazard.longitude }}
+      coordinate={coordinate}
       title={hazard.name}
       description={description}
       onPress={handlePress}
+      tracksViewChanges={false}
+      anchor={HAZARD_ANCHOR}
     >
       <View style={[styles.hazardMarker, { backgroundColor: hazardColor }]}>
         {hazard.type === 'weight_limit' ? (
@@ -73,6 +83,28 @@ export const HazardMarkerItem = memo(function HazardMarkerItem({ hazard, colors,
         )}
       </View>
     </Marker>
+  );
+});
+
+interface MarkerListProps {
+  docks: Dock[];
+  hazards: Hazard[];
+  colors: ThemeColors;
+  profile: TruckProfile;
+  onDockPress: (dock: Dock) => void;
+  onHazardPress: (hazard: Hazard) => void;
+}
+
+export const MapMarkerList = memo(function MapMarkerList({ docks, hazards, colors, profile, onDockPress, onHazardPress }: MarkerListProps) {
+  return (
+    <>
+      {docks.map((dock) => (
+        <DockMarkerItem key={dock.id} dock={dock} colors={colors} onPress={onDockPress} />
+      ))}
+      {hazards.map((hazard) => (
+        <HazardMarkerItem key={hazard.id} hazard={hazard} colors={colors} profile={profile} onPress={onHazardPress} />
+      ))}
+    </>
   );
 });
 
