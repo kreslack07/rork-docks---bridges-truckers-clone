@@ -24,6 +24,7 @@ import { ThemeColors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useVoice, useUnits } from '@/context/UserPreferencesContext';
+import Constants from 'expo-constants';
 import AppearanceSection from '@/components/profile/AppearanceSection';
 import VoiceSection from '@/components/profile/VoiceSection';
 import NotificationSettings from '@/components/profile/NotificationSettings';
@@ -249,7 +250,7 @@ export default function SettingsScreen() {
         </>
       )}
 
-      <Text style={styles.versionText}>Docks & Bridges Truckers v1.0.0</Text>
+      <Text style={styles.versionText}>Docks & Bridges Truckers v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
     </ScrollView>
   );
 }

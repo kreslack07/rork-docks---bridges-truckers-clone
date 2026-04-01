@@ -143,7 +143,7 @@ export default function HazardsScreen() {
     for (const h of hazards) {
       if (h.type === 'bridge') bridges++;
       else if (h.type === 'wire') wires++;
-      if (h.type === 'weight_limit') weightLimited++;
+      else if (h.type === 'weight_limit') weightLimited++;
     }
     return { bridges, wires, weightLimited };
   }, [hazards]);
