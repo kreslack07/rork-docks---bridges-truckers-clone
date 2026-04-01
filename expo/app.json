@@ -59,7 +59,6 @@
           "isAndroidForegroundServiceEnabled": true
         }
       ],
-      "expo-font",
       "expo-web-browser",
       "expo-secure-store"
     ],

@@ -24,8 +24,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
-import { useFleet, FleetTruck } from '@/context/FleetContext';
-import { useTruckProfile } from '@/context/TruckSettingsContext';
+import { useFleet, useTruckProfile, FleetTruck } from '@/context/TruckSettingsContext';
 import { TRUCK_TYPES } from '@/constants/categories';
 import { TruckProfile } from '@/types';
 
@@ -83,7 +82,7 @@ function FleetManageScreenContent() {
         driver: formDriver,
         notes: formNotes,
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } else {
       addTruck({
         name: formName,
@@ -95,7 +94,7 @@ function FleetManageScreenContent() {
         driver: formDriver,
         notes: formNotes,
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
 
     resetForm();
@@ -122,7 +121,7 @@ function FleetManageScreenContent() {
         style: 'destructive',
         onPress: () => {
           removeTruck(truck.id);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         },
       },
     ]);
@@ -136,7 +135,7 @@ function FleetManageScreenContent() {
       type: truck.type,
       plateNumber: truck.plateNumber,
     });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   }, [setActiveTruck, updateProfile]);
 
   const styles = useMemo(() => makeStyles(colors), [colors]);

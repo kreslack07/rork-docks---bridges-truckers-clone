@@ -22,18 +22,23 @@ function RootLayoutNav() {
   const router = useRouter();
   const segments = useSegments();
   const { isComplete, isLoaded } = useOnboarding();
-  const { colors } = useTheme();
+  const { colors, isLoaded: isThemeLoaded } = useTheme();
+
+  const isReady = isLoaded && isThemeLoaded;
 
   useEffect(() => {
-    if (isLoaded) {
-      void SplashScreen.hideAsync();
+    if (isReady) {
+      const timer = setTimeout(() => {
+        void SplashScreen.hideAsync();
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [isLoaded]);
+  }, [isReady]);
 
   const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isReady) return;
 
     const inOnboarding = segments[0] === 'onboarding';
 
@@ -45,7 +50,7 @@ function RootLayoutNav() {
     if (isComplete) {
       hasRedirectedRef.current = false;
     }
-  }, [isComplete, isLoaded, segments, router]);
+  }, [isComplete, isReady, segments, router]);
 
   return (
     <Stack

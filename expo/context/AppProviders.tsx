@@ -6,7 +6,6 @@ import { TruckSettingsProvider } from '@/context/TruckSettingsContext';
 import { FavouritesProvider } from '@/context/FavouritesContext';
 import { NotificationsProvider } from '@/context/NotificationsContext';
 import { CommunityProvider } from '@/context/CommunityContext';
-import { FleetProvider } from '@/context/FleetContext';
 import { LiveDataProvider } from '@/context/LiveDataContext';
 import { NavigationProvider } from '@/context/NavigationContext';
 import { ToastProvider } from '@/context/ToastContext';
@@ -28,7 +27,6 @@ const ComposedProviders = composeProviders([
   OnboardingProvider,
   NotificationsProvider,
   TruckSettingsProvider,
-  FleetProvider,
   FavouritesProvider,
   CommunityProvider,
   LiveDataProvider,

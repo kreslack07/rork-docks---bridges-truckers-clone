@@ -32,7 +32,7 @@ import { ThemeColors } from '@/constants/colors';
 import { useTruckProfile } from '@/context/TruckSettingsContext';
 import { useFavourites } from '@/context/FavouritesContext';
 import { useLiveData } from '@/context/LiveDataContext';
-import { useFleet } from '@/context/FleetContext';
+import { useFleet } from '@/context/TruckSettingsContext';
 import { TruckProfile } from '@/types';
 import EmptyState from '@/components/EmptyState';
 import TruckForm from '@/components/profile/TruckForm';

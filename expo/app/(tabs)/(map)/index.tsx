@@ -17,6 +17,7 @@ import {
   RefreshCw,
   Layers,
   Loader,
+  ZoomIn,
 } from 'lucide-react-native';
 import MapView, { Marker, Polyline, Region } from 'react-native-maps';
 import * as Haptics from 'expo-haptics';
@@ -87,8 +88,11 @@ export default function MapScreen() {
 
   const { filter, filteredDocks, filteredHazards, cycleFilter, filterLabel, clearFilter } = useMapFilters(docks, hazards);
 
-  const visibleDocks = useMemo(() => filteredDocks.length <= 200 ? filteredDocks : filteredDocks.slice(0, 200), [filteredDocks]);
-  const visibleHazards = useMemo(() => filteredHazards.length <= 200 ? filteredHazards : filteredHazards.slice(0, 200), [filteredHazards]);
+  const MARKER_LIMIT = 200;
+  const visibleDocks = useMemo(() => filteredDocks.length <= MARKER_LIMIT ? filteredDocks : filteredDocks.slice(0, MARKER_LIMIT), [filteredDocks]);
+  const visibleHazards = useMemo(() => filteredHazards.length <= MARKER_LIMIT ? filteredHazards : filteredHazards.slice(0, MARKER_LIMIT), [filteredHazards]);
+  const isMarkersCapped = filteredDocks.length > MARKER_LIMIT || filteredHazards.length > MARKER_LIMIT;
+  const hiddenCount = Math.max(0, filteredDocks.length - MARKER_LIMIT) + Math.max(0, filteredHazards.length - MARKER_LIMIT);
   const { activeRoute, routeHazards, isRouting, routeToDock, clearRoute, userLocation, getUserLocation } = useMapRouting(profile, hazards, mapRef);
 
   const handleViewHazards = useCallback(() => {
@@ -332,6 +336,15 @@ export default function MapScreen() {
             </Animated.View>
             <Text style={styles.loadingText}>Updating...</Text>
           </View>
+        </View>
+      )}
+
+      {isMarkersCapped && (
+        <View style={[styles.zoomHintBanner, { top: insets.top + 60 }]} pointerEvents="none">
+          <ZoomIn size={13} color={colors.textSecondary} />
+          <Text style={styles.zoomHintText}>
+            Zoom in to see {hiddenCount} more marker{hiddenCount !== 1 ? 's' : ''}
+          </Text>
         </View>
       )}
 
@@ -610,5 +623,27 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.warning,
     fontSize: 13,
     fontWeight: '700' as const,
+  },
+  zoomHintBanner: {
+    position: 'absolute',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    zIndex: 6,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 4 },
+      android: { elevation: 2 },
+      web: { boxShadow: '0 1px 4px rgba(0,0,0,0.1)' },
+    }),
+  },
+  zoomHintText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '600' as const,
   },
 });
