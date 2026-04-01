@@ -1,6 +1,8 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
+import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface SkeletonProps {
   width?: number | string;
@@ -42,7 +44,7 @@ function SkeletonBlock({ width = '100%', height = 16, borderRadius = 8, style }:
 
 export function HazardCardSkeleton() {
   const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={styles.hazardCard}>
@@ -62,7 +64,7 @@ export function HazardCardSkeleton() {
 
 export function DockCardSkeleton() {
   const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={styles.dockCard}>
@@ -100,7 +102,7 @@ export function ListSkeletonLoader({ count = 5, type = 'hazard' }: { count?: num
   );
 }
 
-const makeStyles = (colors: any) => StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   hazardCard: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -56,10 +56,6 @@ export function useVoiceNavigation({
       hasSpokenEndRef.current = true;
       speakNavigationEnd();
     }
-
-    return () => {
-      stopSpeaking();
-    };
   }, [isNavigating, navProgress, voiceActive]);
 
   useEffect(() => {

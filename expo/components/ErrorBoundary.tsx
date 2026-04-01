@@ -1,7 +1,8 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { DarkTheme, LightTheme, ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface Props {
   children: ReactNode;
@@ -44,7 +45,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       const colors = getThemeColors();
-      const dynamicStyles = makeDynamicStyles(colors);
+      const dynamicStyles = cachedStyles(makeDynamicStyles, colors);
       return (
         <View style={dynamicStyles.container}>
           <View style={dynamicStyles.iconCircle}>
@@ -107,7 +108,7 @@ const makeDynamicStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     marginBottom: 24,
-    fontFamily: 'monospace',
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', web: 'monospace' }),
   },
   retryBtn: {
     flexDirection: 'row',

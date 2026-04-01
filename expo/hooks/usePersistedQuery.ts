@@ -84,6 +84,8 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
   serializeRef.current = serialize;
   const keyRef = useRef(key);
   keyRef.current = key;
+  const fullQueryKeyRef = useRef(fullQueryKey);
+  fullQueryKeyRef.current = fullQueryKey;
   const mountVersionRef = useRef<number>(0);
 
   useEffect(() => {
@@ -99,6 +101,7 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
         const pendingValue = pendingValueRef.current;
         const currentKey = keyRef.current;
         const currentSerialize = serializeRef.current;
+        const currentFullQueryKey = fullQueryKeyRef.current;
         const capturedVersion = version;
         pendingValueRef.current = null;
         try {
@@ -111,7 +114,7 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
             console.log('[usePersistedQuery] Flush on unmount failed:', e);
           });
           if (getMountVersion(currentKey) === capturedVersion) {
-            queryClient.setQueryData(fullQueryKey, pendingValue);
+            queryClient.setQueryData(currentFullQueryKey, pendingValue);
           }
         } catch (e) {
           console.log('[usePersistedQuery] Flush serialize error:', e);

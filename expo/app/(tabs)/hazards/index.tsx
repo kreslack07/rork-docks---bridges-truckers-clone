@@ -54,7 +54,7 @@ export default function HazardsScreen() {
 
     if (filter === 'bridge') result = result.filter((h) => h.type === 'bridge');
     if (filter === 'wire') result = result.filter((h) => h.type === 'wire');
-    if (filter === 'weight_limit') result = result.filter((h) => h.type === 'weight_limit' || h.weightLimit != null);
+    if (filter === 'weight_limit') result = result.filter((h) => h.type === 'weight_limit');
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -143,7 +143,7 @@ export default function HazardsScreen() {
     for (const h of hazards) {
       if (h.type === 'bridge') bridges++;
       else if (h.type === 'wire') wires++;
-      if (h.type === 'weight_limit' || h.weightLimit != null) weightLimited++;
+      if (h.type === 'weight_limit') weightLimited++;
     }
     return { bridges, wires, weightLimited };
   }, [hazards]);
