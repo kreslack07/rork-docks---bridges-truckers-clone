@@ -15,7 +15,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { ThemeColors } from '@/constants/colors';
 import { Hazard } from '@/types';
-import { HazardVerification, CommunityReport } from '@/context/CommunityContext';
+import { HazardVerification, CommunityReport } from '@/context/LiveDataContext';
 
 function formatTimestamp(ts: number): string {
   const d = new Date(ts);
@@ -91,7 +91,7 @@ export default function CommunitySection({
       heightNum,
     );
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setShowVerifyForm(false);
     setVerifyComment('');
     setVerifyHeight('');
@@ -108,7 +108,7 @@ export default function CommunitySection({
     }
 
     addReport(hazard.id, userId, userDisplayName, reportType, reportDesc);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setShowReportForm(false);
     setReportDesc('');
   }, [isAuthenticated, userId, userDisplayName, hazard.id, reportType, reportDesc, addReport]);
@@ -119,7 +119,7 @@ export default function CommunitySection({
       return;
     }
     upvoteReport(reportId, userId);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, [isAuthenticated, userId, upvoteReport]);
 
   const reportTypes: { key: CommunityReport['reportType']; label: string }[] = [

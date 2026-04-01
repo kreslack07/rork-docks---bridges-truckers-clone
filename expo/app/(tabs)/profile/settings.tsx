@@ -23,7 +23,7 @@ import { useTheme, ThemeMode } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@/context/NotificationsContext';
-import { useVoice, useUnits } from '@/context/TruckSettingsContext';
+import { useVoice, useUnits } from '@/context/UserPreferencesContext';
 import AppearanceSection from '@/components/profile/AppearanceSection';
 import VoiceSection from '@/components/profile/VoiceSection';
 import NotificationSettings from '@/components/profile/NotificationSettings';

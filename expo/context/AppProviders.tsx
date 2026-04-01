@@ -2,10 +2,8 @@ import React, { ReactNode, FunctionComponent } from 'react';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { OnboardingProvider } from '@/context/OnboardingContext';
-import { TruckSettingsProvider } from '@/context/TruckSettingsContext';
-import { FavouritesProvider } from '@/context/FavouritesContext';
+import { UserPreferencesProvider } from '@/context/UserPreferencesContext';
 import { NotificationsProvider } from '@/context/NotificationsContext';
-import { CommunityProvider } from '@/context/CommunityContext';
 import { LiveDataProvider } from '@/context/LiveDataContext';
 import { NavigationProvider } from '@/context/NavigationContext';
 import { ToastProvider } from '@/context/ToastContext';
@@ -26,9 +24,7 @@ const ComposedProviders = composeProviders([
   AuthProvider,
   OnboardingProvider,
   NotificationsProvider,
-  TruckSettingsProvider,
-  FavouritesProvider,
-  CommunityProvider,
+  UserPreferencesProvider,
   LiveDataProvider,
   NavigationProvider,
 ]);

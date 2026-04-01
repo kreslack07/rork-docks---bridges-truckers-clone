@@ -1,6 +1,10 @@
 import * as z from "zod";
 import { createTRPCRouter, publicProcedure } from "../create-context";
 
+// STUB: These mutations are not persisted to any database.
+// Reports are validated and acknowledged but lost on restart.
+// TODO: Wire to a real database (e.g. Supabase) when ready for production.
+
 export const hazardsRouter = createTRPCRouter({
   report: publicProcedure
     .input(
@@ -17,13 +21,15 @@ export const hazardsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      console.log('[Backend:Hazards] New hazard report:', input.name, 'on', input.road);
-      const id = `report-h-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      console.log('[Backend:Hazards] [STUB] New hazard report received:', input.name, 'on', input.road);
+      console.log('[Backend:Hazards] [STUB] No database configured — report will not be persisted');
+      const id = `stub-h-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       return {
         id,
         name: input.name,
         road: input.road,
         status: 'pending_review' as const,
+        _stub: true,
       };
     }),
 });

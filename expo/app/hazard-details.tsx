@@ -28,9 +28,9 @@ import {
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import { useLiveData } from '@/context/LiveDataContext';
-import { useTruckProfile } from '@/context/TruckSettingsContext';
+import { useTruckProfile } from '@/context/UserPreferencesContext';
 import { useAuth } from '@/context/AuthContext';
-import { useCommunity } from '@/context/CommunityContext';
+import { useCommunity } from '@/context/LiveDataContext';
 import { openInWaze } from '@/services/waze';
 import * as Haptics from 'expo-haptics';
 import ClearanceCard from '@/components/hazard/ClearanceCard';

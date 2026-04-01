@@ -24,7 +24,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
-import { useFleet, useTruckProfile, FleetTruck } from '@/context/TruckSettingsContext';
+import { useFleet, useTruckProfile, FleetTruck } from '@/context/UserPreferencesContext';
 import { TRUCK_TYPES } from '@/constants/categories';
 import { TruckProfile } from '@/types';
 

@@ -12,7 +12,7 @@ import MapView from 'react-native-maps';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
-import { useTruckProfile, useVoice } from '@/context/TruckSettingsContext';
+import { useTruckProfile, useVoice } from '@/context/UserPreferencesContext';
 import { useLiveData } from '@/context/LiveDataContext';
 import { useNavigation } from '@/context/NavigationContext';
 import { Hazard, RouteCoordinate } from '@/types';
@@ -35,7 +35,7 @@ import {
   HazardWarningParams,
 } from '@/services/voice-navigation';
 
-import { useFavourites } from '@/context/FavouritesContext';
+import { useFavourites } from '@/context/UserPreferencesContext';
 import { openInWaze } from '@/services/waze';
 import RouteNavigationView from '@/components/route/RouteNavigationView';
 import RoutePlanningView from '@/components/route/RoutePlanningView';

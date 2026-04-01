@@ -33,7 +33,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import { BUSINESS_CATEGORY_LABELS } from '@/constants/categories';
 import { useLiveData } from '@/context/LiveDataContext';
-import { useFavourites } from '@/context/FavouritesContext';
+import { useFavourites } from '@/context/UserPreferencesContext';
 import { openInWaze } from '@/services/waze';
 import { cachedStyles } from '@/utils/styleCache';
 

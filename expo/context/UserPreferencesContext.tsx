@@ -8,6 +8,8 @@ const VOICE_ENABLED_KEY = 'voice_navigation_enabled';
 const UNIT_PREFERENCE_KEY = 'unit_preference';
 const FLEET_KEY = 'fleet_trucks';
 const ACTIVE_TRUCK_KEY = 'fleet_active_truck';
+const FAVOURITES_KEY = 'favourite_docks';
+const RECENT_KEY = 'recent_routes';
 
 export type UnitSystem = 'metric' | 'imperial';
 
@@ -17,6 +19,14 @@ export interface FleetTruck extends TruckProfile {
   notes?: string;
   color: string;
   createdAt: number;
+}
+
+export interface RecentRoute {
+  id: string;
+  destination: string;
+  latitude: number;
+  longitude: number;
+  timestamp: number;
 }
 
 const DEFAULT_PROFILE: TruckProfile = {
@@ -33,7 +43,7 @@ const TRUCK_COLORS = [
   '#8B5CF6', '#EC4899', '#14B8A6', '#F97316',
 ];
 
-export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() => {
+export const [UserPreferencesProvider, useUserPreferences] = createContextHook(() => {
   const profilePersisted = usePersistedQuery<TruckProfile>({
     key: TRUCK_PROFILE_KEY,
     queryKey: ['truckProfile'],
@@ -66,11 +76,25 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
     defaultValue: null,
   });
 
+  const favs = usePersistedQuery<string[]>({
+    key: FAVOURITES_KEY,
+    queryKey: ['favouriteDocks'],
+    defaultValue: [],
+  });
+
+  const recents = usePersistedQuery<RecentRoute[]>({
+    key: RECENT_KEY,
+    queryKey: ['recentRoutes'],
+    defaultValue: [],
+  });
+
   const { updateValue: updateProfileValue } = profilePersisted;
   const { setValue: setVoiceValue } = voicePersisted;
   const { setValue: setUnitValue } = unitPersisted;
   const { updateValue: updateTrucks } = trucksPersisted;
   const { setValue: setActiveValue, value: activeValue } = activePersisted;
+  const { updateValue: updateFavs } = favs;
+  const { updateValue: updateRecents, setValue: setRecents } = recents;
 
   const updateProfile = useCallback((updates: Partial<TruckProfile>) => {
     updateProfileValue(prev => ({ ...prev, ...updates }));
@@ -82,12 +106,12 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
 
   const setVoiceEnabled = useCallback((enabled: boolean) => {
     setVoiceValue(enabled);
-    console.log('[TruckSettings] Voice navigation:', enabled ? 'enabled' : 'disabled');
+    console.log('[UserPrefs] Voice navigation:', enabled ? 'enabled' : 'disabled');
   }, [setVoiceValue]);
 
   const setUnitSystem = useCallback((unit: UnitSystem) => {
     setUnitValue(unit);
-    console.log('[TruckSettings] Unit system:', unit);
+    console.log('[UserPrefs] Unit system:', unit);
   }, [setUnitValue]);
 
   const toggleVoice = useCallback(() => {
@@ -132,15 +156,12 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
   const removeTruck = useCallback((id: string) => {
     updateTrucks(prev => {
       const updated = prev.filter(t => t.id !== id);
-
       if (activeValue === id) {
         const newActive = updated.length > 0 ? updated[0].id : null;
         setActiveValue(newActive);
       }
-
       return updated;
     });
-
     console.log('[Fleet] Truck removed:', id);
   }, [updateTrucks, activeValue, setActiveValue]);
 
@@ -150,6 +171,39 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
   }, [setActiveValue]);
 
   const activeTruck = useMemo(() => trucksPersisted.value.find(t => t.id === activeValue) ?? null, [trucksPersisted.value, activeValue]);
+
+  const toggleFavourite = useCallback((dockId: string) => {
+    updateFavs((prev) => {
+      return prev.includes(dockId)
+        ? prev.filter((id) => id !== dockId)
+        : [...prev, dockId];
+    });
+  }, [updateFavs]);
+
+  const favouriteSet = useMemo(() => new Set(favs.value), [favs.value]);
+
+  const isFavourite = useCallback(
+    (dockId: string) => favouriteSet.has(dockId),
+    [favouriteSet],
+  );
+
+  const addRecentRoute = useCallback((route: Omit<RecentRoute, 'id' | 'timestamp'>) => {
+    updateRecents((prev) => {
+      const newRoute: RecentRoute = {
+        ...route,
+        id: `route-${Date.now()}`,
+        timestamp: Date.now(),
+      };
+      const filtered = prev.filter((r) => r.destination !== route.destination);
+      return [newRoute, ...filtered].slice(0, 20);
+    });
+  }, [updateRecents]);
+
+  const clearRecentRoutes = useCallback(() => {
+    setRecents([]);
+  }, [setRecents]);
+
+  const favouriteCount = useMemo(() => favs.value.length, [favs.value]);
 
   return useMemo(() => ({
     profile: profilePersisted.value,
@@ -171,6 +225,13 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
     setActiveTruck,
     truckCount: trucksPersisted.value.length,
     isFleetLoading: trucksPersisted.isLoading,
+    favouriteDockIds: favs.value,
+    recentRoutes: recents.value,
+    toggleFavourite,
+    isFavourite,
+    addRecentRoute,
+    clearRecentRoutes,
+    favouriteCount,
   }), [
     profilePersisted.value,
     updateProfile,
@@ -189,21 +250,53 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
     removeTruck,
     setActiveTruck,
     trucksPersisted.isLoading,
+    favs.value,
+    recents.value,
+    toggleFavourite,
+    isFavourite,
+    addRecentRoute,
+    clearRecentRoutes,
+    favouriteCount,
   ]);
 });
 
+export function useTruckSettings() {
+  const ctx = useUserPreferences();
+  return useMemo(() => ({
+    profile: ctx.profile,
+    updateProfile: ctx.updateProfile,
+    updateHeight: ctx.updateHeight,
+    isProfileLoading: ctx.isProfileLoading,
+    isProfileSaving: ctx.isProfileSaving,
+    isVoiceEnabled: ctx.isVoiceEnabled,
+    setVoiceEnabled: ctx.setVoiceEnabled,
+    toggleVoice: ctx.toggleVoice,
+    unitSystem: ctx.unitSystem,
+    setUnitSystem: ctx.setUnitSystem,
+    trucks: ctx.trucks,
+    activeTruck: ctx.activeTruck,
+    activeTruckId: ctx.activeTruckId,
+    addTruck: ctx.addTruck,
+    updateTruck: ctx.updateTruck,
+    removeTruck: ctx.removeTruck,
+    setActiveTruck: ctx.setActiveTruck,
+    truckCount: ctx.truckCount,
+    isFleetLoading: ctx.isFleetLoading,
+  }), [ctx]);
+}
+
 export function useTruckProfile() {
-  const { profile, updateProfile, updateHeight, isProfileLoading, isProfileSaving } = useTruckSettings();
+  const { profile, updateProfile, updateHeight, isProfileLoading, isProfileSaving } = useUserPreferences();
   return { profile, updateProfile, updateHeight, isLoading: isProfileLoading, isSaving: isProfileSaving };
 }
 
 export function useVoice() {
-  const { isVoiceEnabled, setVoiceEnabled, toggleVoice } = useTruckSettings();
+  const { isVoiceEnabled, setVoiceEnabled, toggleVoice } = useUserPreferences();
   return { isVoiceEnabled, setVoiceEnabled, toggleVoice };
 }
 
 export function useUnits() {
-  const { unitSystem, setUnitSystem } = useTruckSettings();
+  const { unitSystem, setUnitSystem } = useUserPreferences();
   const isMetric = unitSystem === 'metric';
   const isMetricRef = useRef(isMetric);
   isMetricRef.current = isMetric;
@@ -238,6 +331,11 @@ export function useUnits() {
 }
 
 export function useFleet() {
-  const { trucks, activeTruck, activeTruckId, addTruck, updateTruck, removeTruck, setActiveTruck, truckCount, isFleetLoading } = useTruckSettings();
+  const { trucks, activeTruck, activeTruckId, addTruck, updateTruck, removeTruck, setActiveTruck, truckCount, isFleetLoading } = useUserPreferences();
   return { trucks, activeTruck, activeTruckId, addTruck, updateTruck, removeTruck, setActiveTruck, truckCount, isLoading: isFleetLoading };
+}
+
+export function useFavourites() {
+  const { favouriteDockIds, recentRoutes, toggleFavourite, isFavourite, addRecentRoute, clearRecentRoutes, favouriteCount } = useUserPreferences();
+  return { favouriteDockIds, recentRoutes, toggleFavourite, isFavourite, addRecentRoute, clearRecentRoutes, favouriteCount };
 }

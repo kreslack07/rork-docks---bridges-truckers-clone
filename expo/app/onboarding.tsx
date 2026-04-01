@@ -32,7 +32,7 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import { TRUCK_TYPES } from '@/constants/categories';
-import { useTruckProfile } from '@/context/TruckSettingsContext';
+import { useTruckProfile } from '@/context/UserPreferencesContext';
 import { useOnboarding } from '@/context/OnboardingContext';
 import { TruckProfile } from '@/types';
 
