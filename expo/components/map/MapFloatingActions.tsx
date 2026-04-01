@@ -1,8 +1,9 @@
 import React, { memo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { AlertTriangle, Plus } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
 import { cachedStyles } from '@/utils/styleCache';
+import { platformShadow } from '@/utils/shadows';
 
 interface MapFloatingActionsProps {
   colors: ThemeColors;
@@ -74,11 +75,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 10,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 10 },
-      android: { elevation: 6 },
-      web: { boxShadow: '0 4px 10px rgba(0,0,0,0.25)' },
-    }),
+    ...platformShadow({ offsetY: 4, radius: 10, opacity: 0.25, elevation: 6 }),
   },
   reportsBadgeIcon: {
     width: 32,
@@ -104,10 +101,6 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8 },
-      android: { elevation: 4 },
-      web: { boxShadow: '0 2px 8px rgba(0,0,0,0.15)' },
-    }),
+    ...platformShadow({ offsetY: 2, radius: 8, opacity: 0.15, elevation: 4 }),
   },
 });

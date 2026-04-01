@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
-  Platform,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import {
@@ -27,6 +26,7 @@ import { Dock } from '@/types';
 import EmptyState from '@/components/EmptyState';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
 import { cachedStyles } from '@/utils/styleCache';
+import { platformShadow } from '@/utils/shadows';
 
 interface FavDockItem extends Dock {
   distance: number | null;
@@ -190,11 +190,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 10,
     borderWidth: 1,
     borderColor: colors.border,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },
-      android: { elevation: 1 },
-      web: { boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
-    }),
+    ...platformShadow({ offsetY: 1, radius: 4, opacity: 0.06, elevation: 1 }),
   },
   dockIconWrap: {
     width: 44,

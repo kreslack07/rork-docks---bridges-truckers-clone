@@ -1,7 +1,8 @@
 import React, { memo, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { X } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
+import { platformShadow } from '@/utils/shadows';
 
 interface FilterIndicatorProps {
   colors: ThemeColors;
@@ -36,11 +37,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6 },
-      android: { elevation: 3 },
-      web: { boxShadow: '0 2px 6px rgba(0,0,0,0.15)' },
-    }),
+    ...platformShadow({ offsetY: 2, radius: 6, opacity: 0.15, elevation: 3 }),
   },
   label: {
     color: colors.white,

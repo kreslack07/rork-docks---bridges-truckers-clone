@@ -22,6 +22,7 @@ import {
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { ThemeColors } from '@/constants/colors';
+import { platformShadow } from '@/utils/shadows';
 import { BUSINESS_CATEGORY_LABELS } from '@/constants/categories';
 import { Dock, Hazard } from '@/types';
 import { getHazardBlockReasons, HazardBlockReason } from '@/utils/classify-hazards';
@@ -256,11 +257,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 18,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.15, shadowRadius: 12 },
-      android: { elevation: 8 },
-      web: { boxShadow: '0 -4px 12px rgba(0,0,0,0.15)' },
-    }),
+    ...platformShadow({ offsetY: -4, radius: 12, opacity: 0.15, elevation: 8 }),
   },
   cardClose: {
     position: 'absolute',

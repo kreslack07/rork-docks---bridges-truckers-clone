@@ -4,10 +4,10 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { Route, AlertTriangle, X } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
+import { platformShadow } from '@/utils/shadows';
 import { LiveRouteResult, formatDistance, formatDuration } from '@/services/routing';
 import { Hazard } from '@/types';
 
@@ -66,11 +66,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 12,
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8 },
-      android: { elevation: 4 },
-      web: { boxShadow: '0 2px 8px rgba(0,0,0,0.15)' },
-    }),
+    ...platformShadow({ offsetY: 2, radius: 8, opacity: 0.15, elevation: 4 }),
   },
   routeBannerContent: {
     flex: 1,

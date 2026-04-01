@@ -1,10 +1,11 @@
 import React, { memo, useMemo, useCallback } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Marker } from 'react-native-maps';
 import { MapPin, AlertTriangle, Zap, Weight } from 'lucide-react-native';
 import { Dock, Hazard, TruckProfile } from '@/types';
 import { ThemeColors } from '@/constants/colors';
 import { getHazardColor } from '@/utils/hazards';
+import { platformShadow } from '@/utils/shadows';
 
 let cachedColors: ThemeColors | null = null;
 let cachedStyles: ReturnType<typeof buildMarkerStyles> | null = null;
@@ -120,11 +121,7 @@ const buildMarkerStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: colors.white,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 3 },
-      android: { elevation: 3 },
-      web: { boxShadow: '0 1px 3px rgba(0,0,0,0.3)' },
-    }),
+    ...platformShadow({ offsetY: 1, radius: 3, opacity: 0.3, elevation: 3 }),
   },
   hazardMarker: {
     width: 28,
@@ -134,10 +131,6 @@ const buildMarkerStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: colors.white,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 3 },
-      android: { elevation: 3 },
-      web: { boxShadow: '0 1px 3px rgba(0,0,0,0.3)' },
-    }),
+    ...platformShadow({ offsetY: 1, radius: 3, opacity: 0.3, elevation: 3 }),
   },
 });

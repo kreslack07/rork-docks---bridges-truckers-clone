@@ -4,10 +4,10 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { Radio, Square } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
+import { platformShadow } from '@/utils/shadows';
 import { NavigationProgress } from '@/services/live-tracking';
 import { formatDistance, formatDuration } from '@/services/routing';
 
@@ -68,11 +68,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 12,
     borderLeftWidth: 4,
     borderLeftColor: colors.success,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 8 },
-      android: { elevation: 5 },
-      web: { boxShadow: '0 2px 8px rgba(0,0,0,0.2)' },
-    }),
+    ...platformShadow({ offsetY: 2, radius: 8, opacity: 0.2, elevation: 5 }),
   },
   liveNavLeft: {
     flex: 1,

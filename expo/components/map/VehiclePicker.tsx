@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { Truck, ChevronRight } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -12,6 +11,7 @@ import { ThemeColors } from '@/constants/colors';
 import { TRUCK_TYPES } from '@/constants/categories';
 import { TruckProfile } from '@/types';
 import { cachedStyles } from '@/utils/styleCache';
+import { platformShadow } from '@/utils/shadows';
 
 interface VehiclePickerProps {
   colors: ThemeColors;
@@ -91,11 +91,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6 },
-      android: { elevation: 3 },
-      web: { boxShadow: '0 2px 6px rgba(0,0,0,0.2)' },
-    }),
+    ...platformShadow({ offsetY: 2, radius: 6, opacity: 0.2, elevation: 3 }),
   },
   vehicleSelectorText: {
     color: colors.white,
@@ -109,11 +105,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.15, shadowRadius: 12 },
-      android: { elevation: 8 },
-      web: { boxShadow: '0 -4px 12px rgba(0,0,0,0.15)' },
-    }),
+    ...platformShadow({ offsetY: -4, radius: 12, opacity: 0.15, elevation: 8 }),
   },
   vehiclePickerTitle: {
     color: colors.text,

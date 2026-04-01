@@ -34,9 +34,9 @@ export default function TabLayout() {
               shadowRadius: 8,
             },
             android: { elevation: 8 },
-            web: { boxShadow: '0 -2px 8px rgba(0,0,0,0.06)' },
+            default: {},
           }),
-        },
+        } as const,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600' as const,

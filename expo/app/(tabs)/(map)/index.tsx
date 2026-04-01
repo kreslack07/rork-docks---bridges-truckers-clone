@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
   Animated,
   Alert,
   Keyboard,
@@ -47,6 +46,7 @@ import { useMapRouting } from '@/hooks/useMapRouting';
 import { getHazardColor as getHazardColorUtil } from '@/utils/hazards';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
 import { cachedStyles } from '@/utils/styleCache';
+import { platformShadow } from '@/utils/shadows';
 
 const AUSTRALIA_REGION: Region = {
   latitude: -28.0,
@@ -548,11 +548,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8 },
-      android: { elevation: 4 },
-      web: { boxShadow: '0 2px 8px rgba(0,0,0,0.15)' },
-    }),
+    ...platformShadow({ offsetY: 2, radius: 8, opacity: 0.15, elevation: 4 }),
   },
   notifDot: {
     position: 'absolute',
@@ -575,11 +571,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6 },
-      android: { elevation: 3 },
-      web: { boxShadow: '0 2px 6px rgba(0,0,0,0.12)' },
-    }),
+    ...platformShadow({ offsetY: 2, radius: 6, opacity: 0.12, elevation: 3 }),
   },
 
   myLocationBtn: {
@@ -591,11 +583,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8 },
-      android: { elevation: 4 },
-      web: { boxShadow: '0 2px 8px rgba(0,0,0,0.15)' },
-    }),
+    ...platformShadow({ offsetY: 2, radius: 8, opacity: 0.15, elevation: 4 }),
   },
   wazeArrow: {
     width: 32,
@@ -625,11 +613,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 4 },
-      android: { elevation: 2 },
-      web: { boxShadow: '0 1px 4px rgba(0,0,0,0.1)' },
-    }),
+    ...platformShadow({ offsetY: 1, radius: 4, opacity: 0.1, elevation: 2 }),
   },
   loadingText: {
     color: colors.textSecondary,
@@ -649,11 +633,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     zIndex: 10,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6 },
-      android: { elevation: 4 },
-      web: { boxShadow: '0 2px 6px rgba(0,0,0,0.15)' },
-    }),
+    ...platformShadow({ offsetY: 2, radius: 6, opacity: 0.15, elevation: 4 }),
   },
   offlineRetryText: {
     color: colors.warning,
@@ -671,11 +651,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     zIndex: 6,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 4 },
-      android: { elevation: 2 },
-      web: { boxShadow: '0 1px 4px rgba(0,0,0,0.1)' },
-    }),
+    ...platformShadow({ offsetY: 1, radius: 4, opacity: 0.1, elevation: 2 }),
   },
   zoomHintText: {
     color: colors.textSecondary,
@@ -696,11 +672,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 36,
     alignItems: 'center',
     gap: 10,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 12 },
-      android: { elevation: 8 },
-      web: { boxShadow: '0 4px 12px rgba(0,0,0,0.18)' },
-    }),
+    ...platformShadow({ offsetY: 4, radius: 12, opacity: 0.18, elevation: 8 }),
   },
   firstLoadTitle: {
     color: colors.text,

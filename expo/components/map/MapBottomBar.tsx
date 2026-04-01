@@ -1,8 +1,9 @@
 import React, { memo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Search } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
 import { cachedStyles } from '@/utils/styleCache';
+import { platformShadow } from '@/utils/shadows';
 
 interface MapBottomBarProps {
   colors: ThemeColors;
@@ -54,11 +55,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 16,
     paddingTop: 8,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 12 },
-      android: { elevation: 8 },
-      web: { boxShadow: '0 -4px 12px rgba(0,0,0,0.1)' },
-    }),
+    ...platformShadow({ offsetY: -4, radius: 12, opacity: 0.1, elevation: 8 }),
   },
   handle: {
     width: 36,

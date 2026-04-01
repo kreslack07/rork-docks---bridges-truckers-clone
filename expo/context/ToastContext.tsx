@@ -13,6 +13,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import { cachedStyles } from '@/utils/styleCache';
+import { platformShadow } from '@/utils/shadows';
 
 export type ToastType = 'error' | 'success' | 'info' | 'warning';
 
@@ -197,11 +198,7 @@ const makeToastStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 14,
     gap: 10,
     borderLeftWidth: 4,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12 },
-      android: { elevation: 8 },
-      web: { boxShadow: '0 4px 16px rgba(0,0,0,0.25)' },
-    }),
+    ...platformShadow({ offsetY: 4, radius: 12, opacity: 0.2, elevation: 8 }),
   },
   iconWrap: {
     width: 32,
