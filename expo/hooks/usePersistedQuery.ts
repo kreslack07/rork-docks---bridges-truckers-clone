@@ -44,8 +44,7 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
   const [value, setValue] = useState<T>(defaultValue);
 
   const query = useQuery({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: [...queryKey, key],
+    queryKey: fullQueryKey,
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(key);
       if (stored !== null) {
@@ -168,8 +167,7 @@ export function usePersistedStringQuery(options: UsePersistedStringQueryOptions)
   const [value, setValue] = useState<string | null>(defaultValue);
 
   const query = useQuery({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: [...queryKey, key],
+    queryKey: fullQueryKey,
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(key);
       return stored ?? defaultValue;
@@ -226,8 +224,7 @@ export function usePersistedBoolQuery(options: {
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   const query = useQuery({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: [...queryKey, key],
+    queryKey: fullQueryKey,
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(key);
       if (stored !== null) return stored === 'true';
