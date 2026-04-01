@@ -9,7 +9,7 @@ const OSRM_ENDPOINTS = [
 ];
 const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org/search';
 
-const OSRM_COOLDOWN_MS = 30000;
+const OSRM_COOLDOWN_MS = 10000;
 
 const g = globalThis as Record<string, any>;
 if (g.__ROUTING_OSRM_INDEX__ === undefined) g.__ROUTING_OSRM_INDEX__ = 0;
@@ -118,6 +118,18 @@ function parseOsrmResponse(data: any): LiveRouteResult | null {
     steps,
     summary: route.legs[0]?.summary ?? '',
   };
+}
+
+export function isRoutingOnCooldown(): boolean {
+  if (getOsrmIndex() !== 0 && Date.now() - getLastFailure() < OSRM_COOLDOWN_MS) {
+    return true;
+  }
+  return false;
+}
+
+export function getCooldownRemainingMs(): number {
+  if (!isRoutingOnCooldown()) return 0;
+  return Math.max(0, OSRM_COOLDOWN_MS - (Date.now() - getLastFailure()));
 }
 
 export async function getRoute(

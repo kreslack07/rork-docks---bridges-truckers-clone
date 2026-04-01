@@ -1,14 +1,22 @@
 import { Tabs } from "expo-router";
 import { Map, Navigation, AlertTriangle, Truck } from "lucide-react-native";
-import React from "react";
+import React, { useCallback } from "react";
 import { Platform } from "react-native";
+import * as Haptics from 'expo-haptics';
 import { useTheme } from "@/context/ThemeContext";
 
 export default function TabLayout() {
   const { colors } = useTheme();
 
+  const handleTabPress = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
+
   return (
     <Tabs
+      screenListeners={{
+        tabPress: handleTabPress,
+      }}
       screenOptions={{
         headerShown: false,
         lazy: true,

@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import MapView from 'react-native-maps';
 import { Dock, Hazard, TruckProfile } from '@/types';
-import { getRoute, analyzeRouteHazards, LiveRouteResult } from '@/services/routing';
+import { getRoute, analyzeRouteHazards, LiveRouteResult, isRoutingOnCooldown, getCooldownRemainingMs } from '@/services/routing';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useToast } from '@/context/ToastContext';
 
@@ -18,6 +18,11 @@ export function useMapRouting(profile: TruckProfile, hazards: Hazard[], mapRef: 
   const routeToDockMutation = useMutation({
     mutationFn: async (dock: Dock) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      if (isRoutingOnCooldown()) {
+        const remainSec = Math.ceil(getCooldownRemainingMs() / 1000);
+        showToast('warning', 'Routing Busy', `Routing servers are recovering. Try again in ${remainSec}s.`);
+        return null;
+      }
       const origin = await getUserLocation();
       if (!origin) return null;
       const dest = { latitude: dock.latitude, longitude: dock.longitude };

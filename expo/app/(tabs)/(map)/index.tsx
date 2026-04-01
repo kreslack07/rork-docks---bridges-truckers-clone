@@ -261,6 +261,7 @@ export default function MapScreen() {
   }, [stopNavigation]);
 
   const isLoading = isLoadingDocks || isLoadingHazards;
+  const isFirstLoad = isLoading && docks.length === 0 && hazards.length === 0;
 
   const loadingSpinAnim = useRef(new Animated.Value(0)).current;
 
@@ -333,7 +334,23 @@ export default function MapScreen() {
           ))}
         </MapView>
 
-      {isLoading && (
+      {isFirstLoad && (
+        <View style={styles.firstLoadOverlay}>
+          <View style={styles.firstLoadCard}>
+            <Animated.View
+              style={{
+                transform: [{ rotate: loadingSpinAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }],
+              }}
+            >
+              <Loader size={24} color={colors.primary} />
+            </Animated.View>
+            <Text style={styles.firstLoadTitle}>Loading Map Data</Text>
+            <Text style={styles.firstLoadSub}>Fetching docks & hazards nearby...</Text>
+          </View>
+        </View>
+      )}
+
+      {isLoading && !isFirstLoad && (
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingPill}>
             <Animated.View
@@ -655,5 +672,36 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 12,
     fontWeight: '600' as const,
+  },
+  firstLoadOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+  },
+  firstLoadCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    paddingVertical: 28,
+    paddingHorizontal: 36,
+    alignItems: 'center',
+    gap: 10,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 12 },
+      android: { elevation: 8 },
+      web: { boxShadow: '0 4px 12px rgba(0,0,0,0.18)' },
+    }),
+  },
+  firstLoadTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '700' as const,
+    marginTop: 4,
+  },
+  firstLoadSub: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '500' as const,
   },
 });

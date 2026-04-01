@@ -31,12 +31,12 @@ export function redirectSystemPath({
 
   if (url.includes('route') || url.includes('navigate') || url.includes('directions')) {
     console.log('[DeepLink] Redirecting to route planner');
-    return '/route';
+    return '/(tabs)/route';
   }
 
   if (url.includes('hazards') || url.includes('bridges') || url.includes('clearance')) {
     console.log('[DeepLink] Redirecting to hazards list');
-    return '/hazards';
+    return '/(tabs)/hazards';
   }
 
   if (url.includes('favourites') || url.includes('favorites') || url.includes('bookmarks')) {
@@ -51,7 +51,7 @@ export function redirectSystemPath({
 
   if (url.includes('profile') || url.includes('settings') || url.includes('account')) {
     console.log('[DeepLink] Redirecting to profile');
-    return '/profile';
+    return '/(tabs)/profile';
   }
 
   if (url.includes('about') || url.includes('changelog')) {

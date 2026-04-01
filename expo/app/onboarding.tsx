@@ -207,12 +207,21 @@ export default function OnboardingScreen() {
           <View style={styles.infoStep}>
             {step === 0 ? (
               <View style={styles.appIconWrap}>
-                <Image
-                  source={(() => { try { return require('@/assets/images/icon.png'); } catch { return undefined; } })()}
-                  style={styles.appIconImage}
-                  accessibilityLabel="App icon"
-                  defaultSource={undefined}
-                />
+                {(() => {
+                  let iconSource: any = null;
+                  try { iconSource = require('@/assets/images/icon.png'); } catch { iconSource = null; }
+                  return iconSource ? (
+                    <Image
+                      source={iconSource}
+                      style={styles.appIconImage}
+                      accessibilityLabel="App icon"
+                    />
+                  ) : (
+                    <View style={[styles.appIconImage, { backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
+                      <Truck size={48} color={colors.background} />
+                    </View>
+                  );
+                })()
               </View>
             ) : (
               <View style={styles.iconCircle}>
@@ -423,8 +432,12 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   skipBtn: {
     alignSelf: 'flex-end',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    backgroundColor: colors.elevated,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   skipText: {
     color: colors.textSecondary,

@@ -214,12 +214,8 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
 
   const clearNotifications = useCallback(() => {
     setHistoryValue([]);
-    mutateClearHistory(undefined, {
-      onSuccess: () => {
-        queryClient.setQueryData(['notificationHistory', NOTIF_HISTORY_KEY], () => []);
-      },
-    });
-  }, [setHistoryValue, mutateClearHistory, queryClient]);
+    queryClient.setQueryData(['notificationHistory', NOTIF_HISTORY_KEY], () => []);
+  }, [setHistoryValue, queryClient]);
 
   const unreadCount = useMemo(() => historyPersisted.value.filter(n => !n.read).length, [historyPersisted.value]);
 
