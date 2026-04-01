@@ -76,8 +76,9 @@ export default function SettingsScreen() {
               await deleteAccount();
               void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               Alert.alert('Account Deleted', 'Your account has been permanently deleted.');
-            } catch (err: any) {
-              Alert.alert('Error', err.message || 'Failed to delete account. Please try again.');
+            } catch (err: unknown) {
+              const message = err instanceof Error ? err.message : 'Failed to delete account. Please try again.';
+              Alert.alert('Error', message);
             }
           },
         },

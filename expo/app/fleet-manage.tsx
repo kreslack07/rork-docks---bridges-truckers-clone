@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ import { ThemeColors } from '@/constants/colors';
 import { useFleet, useTruckProfile, FleetTruck } from '@/context/UserPreferencesContext';
 import { TRUCK_TYPES } from '@/constants/categories';
 import { TruckProfile } from '@/types';
+import { cachedStyles } from '@/utils/styleCache';
 
 function FleetManageScreenContent() {
   const { colors } = useTheme();
@@ -138,7 +139,7 @@ function FleetManageScreenContent() {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   }, [setActiveTruck, updateProfile]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">

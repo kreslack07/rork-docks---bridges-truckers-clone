@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,7 @@ import { BUSINESS_CATEGORY_LABELS } from '@/constants/categories';
 import { Dock } from '@/types';
 import EmptyState from '@/components/EmptyState';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface FavDockItem extends Dock {
   distance: number | null;
@@ -42,7 +43,7 @@ function FavouritesScreenContent() {
     void getUserLocation();
   }, [getUserLocation]);
 
-  const favouriteDocks = useMemo<FavDockItem[]>(() => {
+  const favouriteDocks = React.useMemo<FavDockItem[]>(() => {
     const idSet = new Set(favouriteDockIds);
     const favs = docks.filter((d) => idSet.has(d.id));
     return favs
@@ -65,7 +66,7 @@ function FavouritesScreenContent() {
     router.push({ pathname: '/dock-details', params: { id: dock.id } });
   }, [router]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   const renderItem = useCallback(({ item }: { item: FavDockItem }) => {
     const categoryLabel = BUSINESS_CATEGORY_LABELS[item.businessCategory] ?? item.businessCategory;

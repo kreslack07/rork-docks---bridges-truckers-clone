@@ -16,7 +16,7 @@ import {
   Clock,
   ExternalLink,
 } from 'lucide-react-native';
-import { Image } from 'react-native';
+import { Image, Platform } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
@@ -55,7 +55,7 @@ function AboutScreenContent() {
       <View style={styles.heroSection}>
         <View style={styles.appIconContainer}>
           <Image
-            source={require('@/assets/images/icon.png')}
+            source={Platform.OS === 'web' ? { uri: '/assets/images/icon.png' } : require('@/assets/images/icon.png')}
             style={styles.appIconImage}
             accessibilityLabel="App icon"
           />
