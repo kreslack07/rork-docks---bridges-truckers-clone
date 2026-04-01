@@ -20,12 +20,15 @@ import { BUSINESS_CATEGORY_LABELS } from '@/constants/categories';
 import { Dock, Hazard } from '@/types';
 import EmptyState from '@/components/EmptyState';
 import { ListSkeletonLoader } from '@/components/SkeletonLoader';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import { haversineDistance } from '@/utils/geo';
 
 type SearchResult = {
   id: string;
   type: 'dock' | 'hazard';
   title: string;
   subtitle: string;
+  distance: number | null;
   data: Dock | Hazard;
 };
 
@@ -35,11 +38,21 @@ function SearchScreenContent() {
   const { docks, hazards, isLoadingDocks, isLoadingHazards } = useLiveData();
   const { profile } = useTruckProfile();
   const { recentRoutes } = useFavourites();
+  const { userLocation, getUserLocation } = useUserLocation();
   const [query, setQuery] = useState<string>('');
+
+  React.useEffect(() => {
+    void getUserLocation();
+  }, [getUserLocation]);
 
   const results = useMemo<SearchResult[]>(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase().trim();
+
+    const getDistance = (lat: number, lon: number): number | null => {
+      if (!userLocation) return null;
+      return haversineDistance(userLocation.latitude, userLocation.longitude, lat, lon);
+    };
 
     const dockResults: SearchResult[] = docks
       .filter(d =>
@@ -53,6 +66,7 @@ function SearchScreenContent() {
         type: 'dock' as const,
         title: d.name,
         subtitle: `${d.business} · ${d.city}, ${d.state}`,
+        distance: getDistance(d.latitude, d.longitude),
         data: d,
       }));
 
@@ -67,14 +81,19 @@ function SearchScreenContent() {
         type: 'hazard' as const,
         title: h.name,
         subtitle: `${h.road} · ${h.city}, ${h.state}`,
+        distance: getDistance(h.latitude, h.longitude),
         data: h,
       }));
 
-    return [...dockResults, ...hazardResults].slice(0, 30);
-  }, [query, docks, hazards]);
+    const combined = [...dockResults, ...hazardResults];
+    if (userLocation) {
+      combined.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+    }
+    return combined.slice(0, 30);
+  }, [query, docks, hazards, userLocation]);
 
   const handleSelect = useCallback((item: SearchResult) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (item.type === 'dock') {
       router.push({ pathname: '/dock-details', params: { id: item.id } });
     } else {
@@ -136,6 +155,13 @@ function SearchScreenContent() {
             </View>
           )}
         </View>
+        {item.distance != null && (
+          <Text style={styles.distanceBadge}>
+            {item.distance < 1
+              ? `${Math.round(item.distance * 1000)}m`
+              : `${item.distance.toFixed(1)}km`}
+          </Text>
+        )}
       </TouchableOpacity>
     );
   }, [handleSelect, getHazardColor, colors, styles]);
@@ -159,6 +185,8 @@ function SearchScreenContent() {
             autoCapitalize="none"
             returnKeyType="search"
             testID="search-input"
+            accessibilityLabel="Search docks, hazards, and businesses"
+            accessibilityRole="search"
           />
           {hasQuery && (
             <TouchableOpacity onPress={() => setQuery('')} hitSlop={8}>
@@ -315,6 +343,12 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   resultClearance: {
     fontSize: 11,
     fontWeight: '700' as const,
+  },
+  distanceBadge: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: '600' as const,
+    marginLeft: 4,
   },
   recentSection: {
     paddingBottom: 8,

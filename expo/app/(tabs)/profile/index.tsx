@@ -212,6 +212,16 @@ export default function ProfileScreen() {
         <View style={styles.sectionHeader}>
           <Heart size={16} color={colors.danger} />
           <Text style={styles.sectionTitle}>Favourites ({favouriteCount})</Text>
+          {favouriteCount > 0 && (
+            <TouchableOpacity
+              onPress={() => router.push('/favourites')}
+              style={styles.clearBtn}
+              accessibilityLabel="View all favourite docks"
+              accessibilityRole="button"
+            >
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          )}
         </View>
         {favouriteDocks.length > 0 ? (
           favouriteDocks.slice(0, 5).map((dock) => (
@@ -220,6 +230,8 @@ export default function ProfileScreen() {
               style={styles.listItem}
               onPress={() => router.push({ pathname: '/dock-details', params: { id: dock.id } })}
               activeOpacity={0.7}
+              accessibilityLabel={`${dock.name}, ${dock.business}`}
+              accessibilityRole="button"
             >
               <View style={styles.listItemIcon}>
                 <MapPin size={16} color={colors.primary} />
@@ -489,6 +501,11 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     lineHeight: 18,
     flex: 1,
   },
+  viewAllText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: '600' as const,
+  },
   versionText: {
     color: colors.textMuted,
     fontSize: 11,
@@ -496,5 +513,4 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: 16,
     marginBottom: 8,
   },
-
 });

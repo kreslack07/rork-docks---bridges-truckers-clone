@@ -97,6 +97,10 @@ function RootLayoutNav() {
         options={{ presentation: "modal", title: "Fleet Management" }}
       />
       <Stack.Screen
+        name="favourites"
+        options={{ presentation: "modal", title: "Favourite Docks" }}
+      />
+      <Stack.Screen
         name="about"
         options={{ title: "About" }}
       />

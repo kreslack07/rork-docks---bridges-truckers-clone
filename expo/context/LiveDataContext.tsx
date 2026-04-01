@@ -11,6 +11,7 @@ import { useToast } from '@/context/ToastContext';
 import { logger } from '@/utils/logger';
 import { DOCKS as MOCK_DOCKS } from '@/mocks/docks';
 import { HAZARDS as MOCK_HAZARDS } from '@/mocks/hazards';
+import { useNotifications } from '@/context/NotificationsContext';
 
 
 const DEFAULT_LOCATION: RouteCoordinate = { latitude: -33.8688, longitude: 151.2093 };
@@ -102,6 +103,7 @@ const RATE_LIMIT_RETRY_MS = 30_000;
 
 export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   const { showToast } = useToast();
+  const { addLocalNotification, prefs } = useNotifications();
   const showToastRef = useRef(showToast);
   showToastRef.current = showToast;
   const queryClient = useQueryClient();
@@ -224,6 +226,41 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     [hazardsQuery.data, cachedHazardsQuery.data],
   );
   const isOffline = !!(docksQuery.error && hazardsQuery.error);
+
+  const prevHazardIdsRef = useRef<Set<string>>(new Set());
+  const addLocalNotificationRef = useRef(addLocalNotification);
+  addLocalNotificationRef.current = addLocalNotification;
+  const prefsRef = useRef(prefs);
+  prefsRef.current = prefs;
+
+  useEffect(() => {
+    if (!allHazards.length) return;
+    const currentIds = new Set(allHazards.map(h => h.id));
+    const prevIds = prevHazardIdsRef.current;
+
+    if (prevIds.size > 0 && prefsRef.current.hazardAlerts) {
+      const newHazards = allHazards.filter(h => !prevIds.has(h.id));
+      if (newHazards.length > 0 && newHazards.length <= 10) {
+        const blocked = newHazards.filter(h => h.clearanceHeight < 4.3);
+        if (blocked.length > 0) {
+          addLocalNotificationRef.current(
+            'New Hazards Detected',
+            `${blocked.length} new low-clearance hazard${blocked.length !== 1 ? 's' : ''} found nearby: ${blocked.slice(0, 3).map(h => h.name).join(', ')}`,
+            'hazard',
+          );
+          logger.log('[LiveData] Notified about', blocked.length, 'new blocked hazards');
+        } else if (newHazards.length > 0) {
+          addLocalNotificationRef.current(
+            'New Hazards Nearby',
+            `${newHazards.length} new hazard${newHazards.length !== 1 ? 's' : ''} detected in your area`,
+            'hazard',
+          );
+          logger.log('[LiveData] Notified about', newHazards.length, 'new hazards');
+        }
+      }
+    }
+    prevHazardIdsRef.current = currentIds;
+  }, [allHazards]);
 
   const lastToastRef = useRef<{ key: string; time: number }>({ key: '', time: 0 });
   const allDocksRef = useRef(allDocks);

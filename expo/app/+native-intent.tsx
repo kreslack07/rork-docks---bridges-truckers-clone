@@ -2,50 +2,66 @@ export function redirectSystemPath({
   path,
   initial,
 }: { path: string; initial: boolean }) {
-  if (path.includes('dock/')) {
-    const id = path.split('dock/').pop()?.split('?')[0];
-    if (id) {
-      console.log('[DeepLink] Redirecting to dock details:', id);
-      return `/dock-details?id=${id}`;
-    }
+  void initial;
+  const url = path.toLowerCase();
+
+  const dockIdMatch = path.match(/dock[s]?\/([\w-]+)/i);
+  if (dockIdMatch && dockIdMatch[1] && dockIdMatch[1] !== 'report') {
+    const id = dockIdMatch[1].split('?')[0];
+    console.log('[DeepLink] Redirecting to dock details:', id);
+    return `/dock-details?id=${id}`;
   }
 
-  if (path.includes('hazard/')) {
-    const id = path.split('hazard/').pop()?.split('?')[0];
-    if (id) {
-      console.log('[DeepLink] Redirecting to hazard details:', id);
-      return `/hazard-details?id=${id}`;
-    }
+  const hazardIdMatch = path.match(/hazard[s]?\/([\w-]+)/i);
+  if (hazardIdMatch && hazardIdMatch[1] && hazardIdMatch[1] !== 'report') {
+    const id = hazardIdMatch[1].split('?')[0];
+    console.log('[DeepLink] Redirecting to hazard details:', id);
+    return `/hazard-details?id=${id}`;
   }
 
-  if (path.includes('route') || path.includes('navigate')) {
-    console.log('[DeepLink] Redirecting to route planner');
-    return '/route';
-  }
-
-  if (path.includes('hazards')) {
-    console.log('[DeepLink] Redirecting to hazards list');
-    return '/hazards';
-  }
-
-  if (path.includes('search')) {
-    console.log('[DeepLink] Redirecting to search');
-    return '/search';
-  }
-
-  if (path.includes('profile')) {
-    console.log('[DeepLink] Redirecting to profile');
-    return '/profile';
-  }
-
-  if (path.includes('report-hazard')) {
+  if (url.includes('report-hazard') || url.includes('report_hazard')) {
     console.log('[DeepLink] Redirecting to report hazard');
     return '/report-hazard';
   }
 
-  if (path.includes('report-dock')) {
+  if (url.includes('report-dock') || url.includes('report_dock')) {
     console.log('[DeepLink] Redirecting to report dock');
     return '/report-dock';
+  }
+
+  if (url.includes('route') || url.includes('navigate') || url.includes('directions')) {
+    console.log('[DeepLink] Redirecting to route planner');
+    return '/route';
+  }
+
+  if (url.includes('hazards') || url.includes('bridges') || url.includes('clearance')) {
+    console.log('[DeepLink] Redirecting to hazards list');
+    return '/hazards';
+  }
+
+  if (url.includes('favourites') || url.includes('favorites') || url.includes('bookmarks')) {
+    console.log('[DeepLink] Redirecting to favourites');
+    return '/favourites';
+  }
+
+  if (url.includes('search') || url.includes('find')) {
+    console.log('[DeepLink] Redirecting to search');
+    return '/search';
+  }
+
+  if (url.includes('profile') || url.includes('settings') || url.includes('account')) {
+    console.log('[DeepLink] Redirecting to profile');
+    return '/profile';
+  }
+
+  if (url.includes('about') || url.includes('changelog')) {
+    console.log('[DeepLink] Redirecting to about');
+    return '/about';
+  }
+
+  if (url.includes('fleet')) {
+    console.log('[DeepLink] Redirecting to fleet management');
+    return '/fleet-manage';
   }
 
   console.log('[DeepLink] No matching route for path:', path, '— falling back to home');
