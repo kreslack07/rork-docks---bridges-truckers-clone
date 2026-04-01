@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -199,7 +199,7 @@ export default function MapScreen() {
 
   const regionChangeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       if (regionChangeTimer.current) {
         clearTimeout(regionChangeTimer.current);
@@ -271,7 +271,7 @@ export default function MapScreen() {
 
   const loadingSpinAnim = useRef(new Animated.Value(0)).current;
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isLoading) {
       const spin = Animated.loop(
         Animated.timing(loadingSpinAnim, {

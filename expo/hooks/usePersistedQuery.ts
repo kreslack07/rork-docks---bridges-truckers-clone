@@ -84,12 +84,21 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
       }
       if (pendingValueRef.current !== null) {
         const pendingValue = pendingValueRef.current;
+        const currentKey = keyRef.current;
+        const currentSerialize = serializeRef.current;
         pendingValueRef.current = null;
-        void AsyncStorage.setItem(keyRef.current, serializeRef.current(pendingValue)).catch((e) => {
-          console.log('[usePersistedQuery] Flush on unmount failed:', e);
-        });
+        try {
+          const serialized = currentSerialize(pendingValue);
+          void AsyncStorage.setItem(currentKey, serialized).catch((e) => {
+            console.log('[usePersistedQuery] Flush on unmount failed:', e);
+          });
+          queryClient.setQueryData(fullQueryKey, pendingValue);
+        } catch (e) {
+          console.log('[usePersistedQuery] Flush serialize error:', e);
+        }
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const debouncedPersist = useCallback((newValue: T) => {

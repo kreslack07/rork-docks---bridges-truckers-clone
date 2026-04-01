@@ -36,6 +36,7 @@ export const DockMarkerItem = memo(function DockMarkerItem({ dock, colors, onPre
       onPress={handlePress}
       tracksViewChanges={false}
       anchor={DOCK_ANCHOR}
+      testID={`dock-marker-${dock.id}`}
     >
       <View style={styles.dockMarker}>
         <MapPin size={14} color={colors.white} />
@@ -72,6 +73,7 @@ export const HazardMarkerItem = memo(function HazardMarkerItem({ hazard, colors,
       onPress={handlePress}
       tracksViewChanges={false}
       anchor={HAZARD_ANCHOR}
+      testID={`hazard-marker-${hazard.id}`}
     >
       <View style={[styles.hazardMarker, { backgroundColor: hazardColor }]}>
         {hazard.type === 'weight_limit' ? (

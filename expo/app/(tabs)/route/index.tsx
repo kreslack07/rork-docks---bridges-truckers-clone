@@ -170,7 +170,7 @@ export default function RouteScreen() {
 
   const geocodeMutation = useMutation({
     mutationFn: async ({ text, signal }: { text: string; signal: AbortSignal }) => {
-      const results = await geocodeAddress(text + ', Australia', signal);
+      const results = await geocodeAddress(text, signal);
       return results;
     },
     onError: (error) => {
@@ -206,9 +206,6 @@ export default function RouteScreen() {
         resetVoiceState();
       } catch (error) {
         console.log('[Route] Cleanup voice error:', error);
-      }
-      if (isNavigatingRef.current) {
-        stopNavigationRef.current();
       }
     };
   }, []);

@@ -109,16 +109,17 @@ export default function HazardsScreen() {
 
   const cycleSortMode = useCallback(() => {
     setSortMode((prev) => {
-      if (prev === 'nearest') return 'name';
-      if (prev === 'name') return 'height_asc';
-      if (prev === 'height_asc') return 'height_desc';
-      if (prev === 'height_desc') return 'city';
-      return 'nearest';
+      const next = prev === 'nearest' ? 'name'
+        : prev === 'name' ? 'height_asc'
+        : prev === 'height_asc' ? 'height_desc'
+        : prev === 'height_desc' ? 'city'
+        : 'nearest';
+      if (next === 'nearest' && !userLocation) {
+        void getUserLocation();
+      }
+      return next;
     });
-    if (sortMode === 'city' && !userLocation) {
-      void getUserLocation();
-    }
-  }, [sortMode, userLocation, getUserLocation]);
+  }, [userLocation, getUserLocation]);
 
   const getSortLabel = useCallback(() => {
     switch (sortMode) {

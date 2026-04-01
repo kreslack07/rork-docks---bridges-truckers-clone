@@ -111,6 +111,7 @@ async function saveCachedHazards(hazards: Hazard[]): Promise<void> {
 }
 
 const RATE_LIMIT_RETRY_MS = 30_000;
+const MAX_RATE_LIMIT_RETRIES = 5;
 
 export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   const { showToast } = useToast();
@@ -126,6 +127,7 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     longitudeDelta: 30,
   });
   const rateLimitRetryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rateLimitRetryCountRef = useRef<number>(0);
 
   const lat = Math.round(mapCenter.latitude * 50) / 50;
   const lon = Math.round(mapCenter.longitude * 50) / 50;
@@ -145,11 +147,18 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
 
   const scheduleRateLimitRetry = useCallback(() => {
     if (rateLimitRetryRef.current) return;
-    console.log(`[LiveData] Rate limited — scheduling refetch in ${RATE_LIMIT_RETRY_MS / 1000}s`);
+    if (rateLimitRetryCountRef.current >= MAX_RATE_LIMIT_RETRIES) {
+      console.log('[LiveData] Max rate limit retries reached — stopping');
+      showToastRef.current('warning', 'API Unavailable', 'Data source is temporarily unavailable. Pull to refresh later.');
+      return;
+    }
+    rateLimitRetryCountRef.current += 1;
+    console.log(`[LiveData] Rate limited — scheduling refetch in ${RATE_LIMIT_RETRY_MS / 1000}s (attempt ${rateLimitRetryCountRef.current}/${MAX_RATE_LIMIT_RETRIES})`);
     rateLimitRetryRef.current = setTimeout(() => {
       rateLimitRetryRef.current = null;
       if (!isRateLimited()) {
         console.log('[LiveData] Rate limit cleared — refetching');
+        rateLimitRetryCountRef.current = 0;
         void queryClient.invalidateQueries({ queryKey: ['docks'] });
         void queryClient.invalidateQueries({ queryKey: ['hazards'] });
       } else {

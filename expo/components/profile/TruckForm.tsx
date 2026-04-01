@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -43,6 +43,9 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
   const localStateRef = useRef({ name, heightStr, weightStr, widthStr, plateNumber, selectedType });
   localStateRef.current = { name, heightStr, weightStr, widthStr, plateNumber, selectedType };
 
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasLocalEdits = useRef(false);
+
   useEffect(() => {
     setName(profile.name);
     setHeightStr(profile.height.toString());
@@ -82,6 +85,50 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
     };
   }, []);
 
+  const debouncedAutoSave = useCallback(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    hasLocalEdits.current = true;
+    debounceTimerRef.current = setTimeout(() => {
+      debounceTimerRef.current = null;
+      const s = localStateRef.current;
+      const height = parseFloat(s.heightStr);
+      const weight = parseFloat(s.weightStr);
+      const width = parseFloat(s.widthStr);
+      if (
+        !isNaN(height) && height >= 1 && height <= 10 &&
+        !isNaN(weight) && weight >= 0.5 && weight <= 200 &&
+        !isNaN(width) && width >= 1 && width <= 5
+      ) {
+        hasLocalEdits.current = false;
+        onSaveRef.current({
+          name: s.name,
+          height,
+          weight,
+          width,
+          type: s.selectedType,
+          plateNumber: s.plateNumber,
+        });
+      }
+    }, 1500);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
+
+  const handleFieldChange = useCallback((setter: (v: string) => void) => (text: string) => {
+    setter(text);
+    debouncedAutoSave();
+  }, [debouncedAutoSave]);
+
+  const onChangeName = useMemo(() => handleFieldChange(setName), [handleFieldChange]);
+  const onChangeHeight = useMemo(() => handleFieldChange(setHeightStr), [handleFieldChange]);
+  const onChangeWeight = useMemo(() => handleFieldChange(setWeightStr), [handleFieldChange]);
+  const onChangeWidth = useMemo(() => handleFieldChange(setWidthStr), [handleFieldChange]);
+  const onChangePlate = useMemo(() => handleFieldChange(setPlateNumber), [handleFieldChange]);
+
   const handleSelectType = useCallback((type: TruckProfile['type']) => {
     setSelectedType(type);
     const truckType = TRUCK_TYPES.find((t) => t.value === type);
@@ -91,7 +138,8 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
       setWidthStr(truckType.defaultWidth.toString());
     }
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, []);
+    debouncedAutoSave();
+  }, [debouncedAutoSave]);
 
   const handleSave = useCallback(() => {
     const height = parseFloat(heightStr);
@@ -163,7 +211,7 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
               placeholder="e.g. Big Red"
               placeholderTextColor={colors.textMuted}
               value={name}
-              onChangeText={setName}
+              onChangeText={onChangeName}
             />
           </View>
         </View>
@@ -177,7 +225,7 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
               placeholder="4.3"
               placeholderTextColor={colors.textMuted}
               value={heightStr}
-              onChangeText={setHeightStr}
+              onChangeText={onChangeHeight}
               keyboardType="decimal-pad"
             />
             <Text style={styles.inputSuffix}>m</Text>
@@ -196,7 +244,7 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
               placeholder="42.5"
               placeholderTextColor={colors.textMuted}
               value={weightStr}
-              onChangeText={setWeightStr}
+              onChangeText={onChangeWeight}
               keyboardType="decimal-pad"
             />
             <Text style={styles.inputSuffix}>t</Text>
@@ -215,7 +263,7 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
               placeholder="2.5"
               placeholderTextColor={colors.textMuted}
               value={widthStr}
-              onChangeText={setWidthStr}
+              onChangeText={onChangeWidth}
               keyboardType="decimal-pad"
             />
             <Text style={styles.inputSuffix}>m</Text>
@@ -234,7 +282,7 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
               placeholder="ABC 123"
               placeholderTextColor={colors.textMuted}
               value={plateNumber}
-              onChangeText={setPlateNumber}
+              onChangeText={onChangePlate}
               autoCapitalize="characters"
             />
           </View>

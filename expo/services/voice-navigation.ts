@@ -10,36 +10,43 @@ if (!isWeb) {
   Speech = require('expo-speech');
 }
 
-let lastSpokenInstruction = '';
-let speechQueue: string[] = [];
-let isSpeaking = false;
-let speakingTimeout: ReturnType<typeof setTimeout> | null = null;
-
 const SPEAKING_SAFETY_TIMEOUT_MS = 30000;
 
-if (__DEV__) {
-  const g = globalThis as any;
-  if (g.__VOICE_NAV_HOT_RESET__) {
-    resetVoiceState();
-  }
-  g.__VOICE_NAV_HOT_RESET__ = true;
+const g = globalThis as Record<string, any>;
+if (g.__VOICE_NAV_STATE__ === undefined) {
+  g.__VOICE_NAV_STATE__ = {
+    lastSpokenInstruction: '',
+    speechQueue: [] as string[],
+    isSpeaking: false,
+    speakingTimeout: null as ReturnType<typeof setTimeout> | null,
+  };
+}
+
+function getState() {
+  return g.__VOICE_NAV_STATE__ as {
+    lastSpokenInstruction: string;
+    speechQueue: string[];
+    isSpeaking: boolean;
+    speakingTimeout: ReturnType<typeof setTimeout> | null;
+  };
 }
 
 async function processQueue(): Promise<void> {
-  if (isSpeaking || speechQueue.length === 0) return;
+  const state = getState();
+  if (state.isSpeaking || state.speechQueue.length === 0) return;
 
-  isSpeaking = true;
-  const text = speechQueue.shift();
+  state.isSpeaking = true;
+  const text = state.speechQueue.shift();
   if (!text) {
-    isSpeaking = false;
+    state.isSpeaking = false;
     return;
   }
 
-  if (speakingTimeout) clearTimeout(speakingTimeout);
-  speakingTimeout = setTimeout(() => {
+  if (state.speakingTimeout) clearTimeout(state.speakingTimeout);
+  state.speakingTimeout = setTimeout(() => {
     logger.log('[Voice] Safety timeout — resetting isSpeaking');
-    isSpeaking = false;
-    speakingTimeout = null;
+    state.isSpeaking = false;
+    state.speakingTimeout = null;
     void processQueue();
   }, SPEAKING_SAFETY_TIMEOUT_MS);
 
@@ -50,23 +57,23 @@ async function processQueue(): Promise<void> {
         utterance.lang = 'en-AU';
         utterance.rate = 0.9;
         utterance.onend = () => {
-          isSpeaking = false;
-          if (speakingTimeout) { clearTimeout(speakingTimeout); speakingTimeout = null; }
+          state.isSpeaking = false;
+          if (state.speakingTimeout) { clearTimeout(state.speakingTimeout); state.speakingTimeout = null; }
           void processQueue();
         };
         utterance.onerror = () => {
-          isSpeaking = false;
-          if (speakingTimeout) { clearTimeout(speakingTimeout); speakingTimeout = null; }
+          state.isSpeaking = false;
+          if (state.speakingTimeout) { clearTimeout(state.speakingTimeout); state.speakingTimeout = null; }
           logger.log('[Voice] Web speech error');
           void processQueue();
         };
         window.speechSynthesis.speak(utterance);
       } else {
-        isSpeaking = false;
+        state.isSpeaking = false;
         void processQueue();
       }
     } catch (e) {
-      isSpeaking = false;
+      state.isSpeaking = false;
       logger.log('[Voice] Web speech error:', e);
       void processQueue();
     }
@@ -79,35 +86,36 @@ async function processQueue(): Promise<void> {
       rate: Platform.OS === 'ios' ? 0.52 : 0.9,
       pitch: 1.0,
       onDone: () => {
-        isSpeaking = false;
-        if (speakingTimeout) { clearTimeout(speakingTimeout); speakingTimeout = null; }
+        state.isSpeaking = false;
+        if (state.speakingTimeout) { clearTimeout(state.speakingTimeout); state.speakingTimeout = null; }
         void processQueue();
       },
       onError: () => {
-        isSpeaking = false;
-        if (speakingTimeout) { clearTimeout(speakingTimeout); speakingTimeout = null; }
+        state.isSpeaking = false;
+        if (state.speakingTimeout) { clearTimeout(state.speakingTimeout); state.speakingTimeout = null; }
         logger.log('[Voice] Speech error');
         void processQueue();
       },
     });
   } catch (e) {
-    isSpeaking = false;
-    if (speakingTimeout) { clearTimeout(speakingTimeout); speakingTimeout = null; }
+    state.isSpeaking = false;
+    if (state.speakingTimeout) { clearTimeout(state.speakingTimeout); state.speakingTimeout = null; }
     logger.log('[Voice] Speech error:', e);
     void processQueue();
   }
 }
 
 export function speakInstruction(instruction: string): void {
-  if (instruction === lastSpokenInstruction) return;
+  const state = getState();
+  if (instruction === state.lastSpokenInstruction) return;
 
-  lastSpokenInstruction = instruction;
+  state.lastSpokenInstruction = instruction;
 
   const cleaned = instruction
     .replace(/\b(\d+(\.\d+)?)\s*m\b/g, '$1 metres')
     .replace(/\b(\d+(\.\d+)?)\s*km\b/g, '$1 kilometres');
 
-  speechQueue.push(cleaned);
+  state.speechQueue.push(cleaned);
   void processQueue();
   logger.log('[Voice] Speaking:', cleaned);
 }
@@ -162,24 +170,24 @@ export function speakHazardWarning(
     message = `${params.hazardName} ahead. Clearance ${params.clearanceHeight.toFixed(1)} metres. Safe to pass.`;
   }
 
-  speechQueue.unshift(message);
+  getState().speechQueue.unshift(message);
   void processQueue();
   logger.log('[Voice] Hazard warning:', message);
 }
 
 export function speakNavigationStart(destination: string): void {
   const message = `Navigation started. Heading to ${destination}.`;
-  speechQueue.push(message);
+  getState().speechQueue.push(message);
   void processQueue();
 }
 
 export function speakNavigationEnd(): void {
-  speechQueue = ['You have arrived at your destination.'];
+  getState().speechQueue = ['You have arrived at your destination.'];
   void processQueue();
 }
 
 export function speakRerouting(): void {
-  speechQueue = ['Recalculating route.'];
+  getState().speechQueue = ['Recalculating route.'];
   void processQueue();
 }
 
@@ -192,15 +200,16 @@ export function speakDistanceUpdate(distanceMeters: number): void {
     message = `${Math.round(distanceMeters)} metres remaining.`;
   }
 
-  speechQueue.push(message);
+  getState().speechQueue.push(message);
   void processQueue();
 }
 
 export function stopSpeaking(): void {
-  speechQueue = [];
-  lastSpokenInstruction = '';
-  isSpeaking = false;
-  if (speakingTimeout) { clearTimeout(speakingTimeout); speakingTimeout = null; }
+  const state = getState();
+  state.speechQueue = [];
+  state.lastSpokenInstruction = '';
+  state.isSpeaking = false;
+  if (state.speakingTimeout) { clearTimeout(state.speakingTimeout); state.speakingTimeout = null; }
   try {
     if (isWeb) {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -215,8 +224,9 @@ export function stopSpeaking(): void {
 }
 
 export function resetVoiceState(): void {
-  lastSpokenInstruction = '';
-  speechQueue = [];
-  isSpeaking = false;
-  if (speakingTimeout) { clearTimeout(speakingTimeout); speakingTimeout = null; }
+  const state = getState();
+  state.lastSpokenInstruction = '';
+  state.speechQueue = [];
+  state.isSpeaking = false;
+  if (state.speakingTimeout) { clearTimeout(state.speakingTimeout); state.speakingTimeout = null; }
 }

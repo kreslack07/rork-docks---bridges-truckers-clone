@@ -79,9 +79,11 @@ export default function ProfileScreen() {
     },
   });
 
+  const { mutate: doRefresh, isPending: isRefreshPending } = refreshMutation;
+
   const handleRefresh = useCallback(() => {
-    refreshMutation.mutate();
-  }, [refreshMutation]);
+    doRefresh();
+  }, [doRefresh]);
 
   return (
     <ScrollView
@@ -90,7 +92,7 @@ export default function ProfileScreen() {
       keyboardShouldPersistTaps="handled"
       refreshControl={
         <RefreshControl
-          refreshing={refreshMutation.isPending}
+          refreshing={isRefreshPending}
           onRefresh={handleRefresh}
           tintColor={colors.primary}
           colors={[colors.primary]}
