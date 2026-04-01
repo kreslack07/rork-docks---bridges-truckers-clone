@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -200,12 +201,22 @@ export default function OnboardingScreen() {
       >
         {!isSetupStep ? (
           <View style={styles.infoStep}>
-            <View style={styles.iconCircle}>
-              {React.createElement(STEPS[step].icon, {
-                size: 48,
-                color: colors.primary,
-              })}
-            </View>
+            {step === 0 ? (
+              <View style={styles.appIconWrap}>
+                <Image
+                  source={require('@/assets/images/icon.png')}
+                  style={styles.appIconImage}
+                  accessibilityLabel="App icon"
+                />
+              </View>
+            ) : (
+              <View style={styles.iconCircle}>
+                {React.createElement(STEPS[step].icon, {
+                  size: 48,
+                  color: colors.primary,
+                })}
+              </View>
+            )}
             <Text style={styles.stepTitle}>{STEPS[step].title}</Text>
             <Text style={styles.stepSubtitle}>{STEPS[step].subtitle}</Text>
             <View style={styles.highlightBadge}>
@@ -433,6 +444,18 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 28,
     borderWidth: 2,
     borderColor: colors.primary + '25',
+  },
+  appIconWrap: {
+    width: 110,
+    height: 110,
+    borderRadius: 28,
+    overflow: 'hidden' as const,
+    marginBottom: 28,
+  },
+  appIconImage: {
+    width: 110,
+    height: 110,
+    borderRadius: 28,
   },
   stepTitle: {
     color: colors.text,

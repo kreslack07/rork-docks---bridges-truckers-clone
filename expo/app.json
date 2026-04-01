@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0F1419"
+      "backgroundColor": "#0D1B2A"
     },
     "ios": {
       "supportsTablet": false,
@@ -28,7 +28,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0F1419"
+        "backgroundColor": "#0D1B2A"
       },
       "package": "app.rork.docks_bridges_truckers_clone",
       "permissions": [

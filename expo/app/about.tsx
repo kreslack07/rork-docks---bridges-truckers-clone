@@ -10,13 +10,13 @@ import {
 import { Stack } from 'expo-router';
 import {
   Info,
-  Truck,
   Shield,
   MapPin,
   AlertTriangle,
   Clock,
   ExternalLink,
 } from 'lucide-react-native';
+import { Image } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
@@ -53,7 +53,11 @@ function AboutScreenContent() {
 
       <View style={styles.heroSection}>
         <View style={styles.appIconContainer}>
-          <Truck size={40} color={colors.primary} />
+          <Image
+            source={require('@/assets/images/icon.png')}
+            style={styles.appIconImage}
+            accessibilityLabel="App icon"
+          />
         </View>
         <Text style={styles.appName}>Docks & Bridges Trucker</Text>
         <Text style={styles.versionText}>Version {APP_VERSION} ({BUILD_NUMBER})</Text>
@@ -171,15 +175,16 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 28,
   },
   appIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    backgroundColor: colors.primary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 88,
+    height: 88,
+    borderRadius: 22,
+    overflow: 'hidden' as const,
     marginBottom: 16,
-    borderWidth: 2,
-    borderColor: colors.primary + '30',
+  },
+  appIconImage: {
+    width: 88,
+    height: 88,
+    borderRadius: 22,
   },
   appName: {
     color: colors.text,
