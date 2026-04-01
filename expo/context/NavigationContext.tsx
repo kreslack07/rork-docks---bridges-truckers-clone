@@ -28,6 +28,15 @@ export interface LiveRouteData {
   realHazards: Hazard[];
 }
 
+interface NavigationRefsState {
+  truckHeight: number;
+  truckWeight: number;
+  truckWidth: number;
+  destination: RouteCoordinate | null;
+  activeAbort: AbortController | null;
+  hasArrived: boolean;
+}
+
 async function computeLiveRoute(
   origin: RouteCoordinate,
   destination: RouteCoordinate,
@@ -72,12 +81,14 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
   const [navProgress, setNavProgress] = useState<NavigationProgress | null>(null);
   const [rerouteCount, setRerouteCount] = useState<number>(0);
 
-  const truckHeightRef = useRef<number>(4.3);
-  const truckWeightRef = useRef<number>(42.5);
-  const truckWidthRef = useRef<number>(2.5);
-  const destinationRef = useRef<RouteCoordinate | null>(null);
-
-  const activeAbortRef = useRef<AbortController | null>(null);
+  const navRefs = useRef<NavigationRefsState>({
+    truckHeight: 4.3,
+    truckWeight: 42.5,
+    truckWidth: 2.5,
+    destination: null,
+    activeAbort: null,
+    hasArrived: false,
+  });
 
   const rerouteMutation = useMutation({
     mutationFn: async ({
@@ -120,7 +131,6 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
   const liveRouteRef = useRef(liveRoute);
   liveRouteRef.current = liveRoute;
 
-  const hasArrivedRef = useRef(false);
   const showToastRef = useRef(showToast);
   showToastRef.current = showToast;
   const doRerouteMutateRef = useRef(doRerouteMutate);
@@ -141,24 +151,24 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
 
     setNavProgress(progress);
 
-    if (progress.isOffRoute && destinationRef.current && !isReroutePendingRef.current) {
+    if (progress.isOffRoute && navRefs.current.destination && !isReroutePendingRef.current) {
       logger.log('[Navigation] Off route detected, rerouting...');
       doRerouteMutateRef.current({
         origin: { latitude: pos.latitude, longitude: pos.longitude },
-        destination: destinationRef.current,
-        truckHeight: truckHeightRef.current,
-        truckWeight: truckWeightRef.current,
-        truckWidth: truckWidthRef.current,
+        destination: navRefs.current.destination,
+        truckHeight: navRefs.current.truckHeight,
+        truckWeight: navRefs.current.truckWeight,
+        truckWidth: navRefs.current.truckWidth,
       });
     }
 
-    if (progress.completionPercent >= 98 && !hasArrivedRef.current) {
-      hasArrivedRef.current = true;
+    if (progress.completionPercent >= 98 && !navRefs.current.hasArrived) {
+      navRefs.current.hasArrived = true;
       logger.log('[Navigation] Destination reached — auto-stopping navigation');
       stopLocationTracking();
       setIsNavigating(false);
       setNavProgress(progress);
-      destinationRef.current = null;
+      navRefs.current.destination = null;
       showToastRef.current('success', 'Arrived!', 'You have reached your destination');
     }
   }, []);
@@ -166,16 +176,16 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
   const startNavigation = useCallback(async (truckHeight: number, truckWeight?: number, truckWidth?: number) => {
     if (!liveRoute) return false;
 
-    truckHeightRef.current = truckHeight;
-    if (truckWeight) truckWeightRef.current = truckWeight;
-    if (truckWidth) truckWidthRef.current = truckWidth;
+    navRefs.current.truckHeight = truckHeight;
+    if (truckWeight) navRefs.current.truckWeight = truckWeight;
+    if (truckWidth) navRefs.current.truckWidth = truckWidth;
     resetClosestIndex();
     const lastCoord = liveRoute.route.coordinates[liveRoute.route.coordinates.length - 1];
     if (lastCoord) {
-      destinationRef.current = lastCoord;
+      navRefs.current.destination = lastCoord;
     }
 
-    hasArrivedRef.current = false;
+    navRefs.current.hasArrived = false;
     const started = await startLocationTracking(stablePositionCallback);
     if (started) {
       setIsNavigating(true);
@@ -192,16 +202,17 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
     setIsNavigating(false);
     setNavProgress(null);
     setLivePosition(null);
-    destinationRef.current = null;
+    navRefs.current.destination = null;
     logger.log('[Navigation] Navigation stopped');
   }, []);
 
   useEffect(() => {
+    const refs = navRefs.current;
     return () => {
       stopLocationTracking();
-      if (activeAbortRef.current) {
-        activeAbortRef.current.abort();
-        activeAbortRef.current = null;
+      if (refs.activeAbort) {
+        refs.activeAbort.abort();
+        refs.activeAbort = null;
       }
     };
   }, []);
@@ -220,12 +231,12 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
       truckWeight?: number;
       truckWidth?: number;
     }) => {
-      if (activeAbortRef.current) {
-        activeAbortRef.current.abort();
+      if (navRefs.current.activeAbort) {
+        navRefs.current.activeAbort.abort();
         logger.log('[Navigation] Previous route computation cancelled');
       }
       const controller = new AbortController();
-      activeAbortRef.current = controller;
+      navRefs.current.activeAbort = controller;
 
       logger.log('[Navigation] Computing live route...');
       const result = await computeLiveRoute(origin, destination, truckHeight, truckWeight, truckWidth, controller.signal);
@@ -234,7 +245,7 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
         return null;
       }
 
-      activeAbortRef.current = null;
+      navRefs.current.activeAbort = null;
       return result;
     },
     onSuccess: (data) => {
@@ -266,19 +277,21 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
   );
 
   const clearRoute = useCallback(() => {
-    if (activeAbortRef.current) {
-      activeAbortRef.current.abort();
-      activeAbortRef.current = null;
+    if (navRefs.current.activeAbort) {
+      navRefs.current.activeAbort.abort();
+      navRefs.current.activeAbort = null;
     }
     if (isNavigating) stopNavigation();
     setLiveRoute(null);
     setNavProgress(null);
   }, [isNavigating, stopNavigation]);
 
+  const routeErrorMessage = routeMutation.error ? routeMutation.error.message : null;
+
   return useMemo(() => ({
     liveRoute,
     isRouting: routeMutation.isPending,
-    routeError: routeMutation.error?.message ?? null,
+    routeError: routeErrorMessage,
     computeRoute,
     clearRoute,
     isNavigating,
@@ -291,7 +304,7 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
   }), [
     liveRoute,
     routeMutation.isPending,
-    routeMutation.error,
+    routeErrorMessage,
     computeRoute,
     clearRoute,
     isNavigating,

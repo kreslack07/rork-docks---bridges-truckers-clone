@@ -309,7 +309,7 @@ interface HazardListItemProps {
   item: Hazard;
   styles: ReturnType<typeof makeStyles>;
   colors: ThemeColors;
-  callbacksRef: React.RefObject<{
+  callbacksRef: React.MutableRefObject<{
     getStatusColor: (h: Hazard) => string;
     getStatusLabel: (h: Hazard) => string;
     getConfirmedCount: (id: string) => number;

@@ -71,6 +71,11 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingValueRef = useRef<T | null>(null);
 
+  const serializeRef = useRef(serialize);
+  serializeRef.current = serialize;
+  const keyRef = useRef(key);
+  keyRef.current = key;
+
   useEffect(() => {
     return () => {
       if (debounceRef.current) {
@@ -78,11 +83,14 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
         debounceRef.current = null;
       }
       if (pendingValueRef.current !== null) {
-        mutate(pendingValueRef.current);
+        const pendingValue = pendingValueRef.current;
         pendingValueRef.current = null;
+        void AsyncStorage.setItem(keyRef.current, serializeRef.current(pendingValue)).catch((e) => {
+          console.log('[usePersistedQuery] Flush on unmount failed:', e);
+        });
       }
     };
-  }, [mutate]);
+  }, []);
 
   const debouncedPersist = useCallback((newValue: T) => {
     pendingValueRef.current = newValue;

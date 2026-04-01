@@ -35,6 +35,7 @@ import { useFavourites } from '@/context/UserPreferencesContext';
 import { useLiveData } from '@/context/LiveDataContext';
 import { useFleet } from '@/context/UserPreferencesContext';
 import { TruckProfile } from '@/types';
+import Constants from 'expo-constants';
 import EmptyState from '@/components/EmptyState';
 import TruckForm from '@/components/profile/TruckForm';
 import { cachedStyles } from '@/utils/styleCache';
@@ -301,7 +302,7 @@ export default function ProfileScreen() {
         </Text>
       </View>
 
-      <Text style={styles.versionText}>Docks & Bridges Trucker v1.0.0</Text>
+      <Text style={styles.versionText}>Docks & Bridges Trucker v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
     </ScrollView>
   );
 }

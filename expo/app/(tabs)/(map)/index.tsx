@@ -7,6 +7,7 @@ import {
   Platform,
   Animated,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -112,6 +113,7 @@ export default function MapScreen() {
   showVehiclePickerRef.current = showVehiclePicker;
 
   const dismissVehiclePicker = useCallback(() => {
+    Keyboard.dismiss();
     if (showVehiclePickerRef.current) setShowVehiclePicker(false);
   }, []);
 
@@ -281,8 +283,8 @@ export default function MapScreen() {
   const styles = cachedStyles(makeStyles, colors);
 
   return (
+    <ScreenErrorBoundary screenName="Map" colors={colors}>
     <View style={styles.container}>
-      <ScreenErrorBoundary screenName="Map" colors={colors}>
         <MapView
           ref={mapRef}
           style={styles.map}
@@ -330,7 +332,6 @@ export default function MapScreen() {
             <HazardMarkerItem key={hazard.id} hazard={hazard} colors={colors} profile={profile} onPress={handleHazardPress} />
           ))}
         </MapView>
-      </ScreenErrorBoundary>
 
       {isLoading && (
         <View style={styles.loadingOverlay}>
@@ -500,6 +501,7 @@ export default function MapScreen() {
       />
 
     </View>
+    </ScreenErrorBoundary>
   );
 }
 
