@@ -55,10 +55,12 @@ export const [TruckSettingsProvider, useTruckSettings] = createContextHook(() =>
     console.log('[TruckSettings] Voice navigation:', enabled ? 'enabled' : 'disabled');
   }, [setVoiceValue]);
 
+  const { setValue: setUnitValue } = unitPersisted;
+
   const setUnitSystem = useCallback((unit: UnitSystem) => {
-    unitPersisted.setValue(unit);
+    setUnitValue(unit);
     console.log('[TruckSettings] Unit system:', unit);
-  }, [unitPersisted]);
+  }, [setUnitValue]);
 
   const toggleVoice = useCallback(() => {
     setVoiceEnabled(!voicePersisted.value);

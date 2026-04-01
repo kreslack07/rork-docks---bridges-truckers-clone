@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -37,6 +37,7 @@ import { ThemeColors } from '@/constants/colors';
 import { LiveRouteData } from '@/context/NavigationContext';
 import { Dock, Hazard, RouteCoordinate, TruckProfile } from '@/types';
 import { GeocodedPlace, formatDistance, formatDuration } from '@/services/routing';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface RoutePlanningViewProps {
   colors: ThemeColors;
@@ -88,7 +89,7 @@ export default function RoutePlanningView({
   getHazardColor,
 }: RoutePlanningViewProps) {
   const [showSteps, setShowSteps] = useState<boolean>(false);
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <ScrollView

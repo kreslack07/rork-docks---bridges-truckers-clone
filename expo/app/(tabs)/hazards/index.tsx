@@ -23,6 +23,7 @@ import EmptyState from '@/components/EmptyState';
 import { getHazardColor as getHazardColorUtil, getHazardStatusLabel } from '@/utils/hazards';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { haversineDistance } from '@/utils/geo';
+import { cachedStyles } from '@/utils/styleCache';
 
 type SortMode = 'nearest' | 'name' | 'height_asc' | 'height_desc' | 'city';
 
@@ -152,7 +153,7 @@ export default function HazardsScreen() {
     { key: 'weight_limit', label: 'Weight', count: typeCounts.weightLimited },
   ], [hazards.length, typeCounts]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
 
   const callbacksRef = useRef({ getStatusColor, getStatusLabel, getConfirmedCount, getDisputedCount });

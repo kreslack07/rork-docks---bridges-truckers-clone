@@ -36,6 +36,7 @@ import { useFleet } from '@/context/FleetContext';
 import { TruckProfile } from '@/types';
 import EmptyState from '@/components/EmptyState';
 import TruckForm from '@/components/profile/TruckForm';
+import { cachedStyles } from '@/utils/styleCache';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -68,7 +69,7 @@ export default function ProfileScreen() {
     updateProfile(updates);
   }, [updateProfile]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 

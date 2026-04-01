@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -25,6 +25,7 @@ import { ThemeColors } from '@/constants/colors';
 import { BUSINESS_CATEGORY_LABELS } from '@/constants/categories';
 import { Dock, Hazard } from '@/types';
 import { getHazardBlockReasons, HazardBlockReason } from '@/utils/classify-hazards';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface MapDetailCardProps {
   colors: ThemeColors;
@@ -76,10 +77,10 @@ function MapDetailCardComponent({
       android: `google.navigation:q=${dock.latitude},${dock.longitude}`,
       default: `https://www.google.com/maps/dir/?api=1&destination=${dock.latitude},${dock.longitude}`,
     });
-    if (url) Linking.openURL(url);
+    if (url) void Linking.openURL(url);
   }, []);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   if (!selectedDock && !selectedHazard) return null;
 

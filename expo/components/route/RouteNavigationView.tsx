@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -28,6 +28,7 @@ import { LiveRouteData } from '@/context/NavigationContext';
 import { NavigationProgress, LivePosition } from '@/services/live-tracking';
 import { formatDistance, formatDuration } from '@/services/routing';
 import { RouteCoordinate, TruckProfile } from '@/types';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface RouteNavigationViewProps {
   colors: ThemeColors;
@@ -85,7 +86,7 @@ export default function RouteNavigationView({
   onOpenInMaps,
   onOpenInWaze,
 }: RouteNavigationViewProps) {
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={styles.navContainer}>

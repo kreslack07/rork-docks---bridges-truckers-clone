@@ -1,7 +1,8 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { Search } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface MapBottomBarProps {
   colors: ThemeColors;
@@ -12,7 +13,7 @@ interface MapBottomBarProps {
 }
 
 function MapBottomBarComponent({ colors, insetBottom, isLoading, isOffline, onSearchPress }: MapBottomBarProps) {
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={[styles.bottomSheet, { paddingBottom: insetBottom + 8 }]}>

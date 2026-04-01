@@ -217,15 +217,22 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
       : undefined,
   });
 
+  const docksData = docksQuery.data;
+  const cachedDocksData = cachedDocksQuery.data;
+  const hazardsData = hazardsQuery.data;
+  const cachedHazardsData = cachedHazardsQuery.data;
+
   const allDocks = useMemo(
-    () => docksQuery.data ?? cachedDocksQuery.data ?? [],
-    [docksQuery.data, cachedDocksQuery.data],
+    () => docksData ?? cachedDocksData ?? [],
+    [docksData, cachedDocksData],
   );
   const allHazards = useMemo(
-    () => hazardsQuery.data ?? cachedHazardsQuery.data ?? [],
-    [hazardsQuery.data, cachedHazardsQuery.data],
+    () => hazardsData ?? cachedHazardsData ?? [],
+    [hazardsData, cachedHazardsData],
   );
-  const isOffline = !!(docksQuery.error && hazardsQuery.error);
+  const docksError = docksQuery.error;
+  const hazardsError = hazardsQuery.error;
+  const isOffline = !!(docksError && hazardsError);
 
   const prevHazardIdsRef = useRef<Set<string>>(new Set());
   const prevDockIdsRef = useRef<Set<string>>(new Set());
@@ -291,11 +298,11 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   useEffect(() => {
     const now = Date.now();
     let toastKey = '';
-    if (docksQuery.error && hazardsQuery.error) {
+    if (docksError && hazardsError) {
       toastKey = 'offline';
-    } else if (docksQuery.error) {
+    } else if (docksError) {
       toastKey = 'docks-error';
-    } else if (hazardsQuery.error) {
+    } else if (hazardsError) {
       toastKey = 'hazards-error';
     }
 
@@ -334,7 +341,7 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
       }
       showToastRef.current('warning', 'Limited Hazard Data', 'Live data unavailable — showing known hazards');
     }
-  }, [docksQuery.error, hazardsQuery.error, lat, lon, queryClient]);
+  }, [docksError, hazardsError, lat, lon, queryClient]);
 
   const mapCenterRef = useRef<RouteCoordinate>(DEFAULT_LOCATION);
   useEffect(() => {
@@ -372,31 +379,38 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     [hazardsMap],
   );
 
+  const isLoadingDocks = docksQuery.isLoading;
+  const isLoadingHazards = hazardsQuery.isLoading;
+  const docksErrorMsg = docksError?.message ?? null;
+  const hazardsErrorMsg = hazardsError?.message ?? null;
+  const refetchDocks = docksQuery.refetch;
+  const refetchHazards = hazardsQuery.refetch;
+
   return useMemo(() => ({
     docks: allDocks,
     hazards: allHazards,
-    isLoadingDocks: docksQuery.isLoading,
-    isLoadingHazards: hazardsQuery.isLoading,
-    docksError: docksQuery.error?.message ?? null,
-    hazardsError: hazardsQuery.error?.message ?? null,
+    isLoadingDocks,
+    isLoadingHazards,
+    docksError: docksErrorMsg,
+    hazardsError: hazardsErrorMsg,
     isOffline,
     updateMapCenter,
     findDockById,
     findHazardById,
-    refetchDocks: docksQuery.refetch,
-    refetchHazards: hazardsQuery.refetch,
+    refetchDocks,
+    refetchHazards,
   }), [
     allDocks,
     allHazards,
-    docksQuery.isLoading,
-    docksQuery.error,
-    docksQuery.refetch,
-    hazardsQuery.isLoading,
-    hazardsQuery.error,
-    hazardsQuery.refetch,
+    isLoadingDocks,
+    isLoadingHazards,
+    docksErrorMsg,
+    hazardsErrorMsg,
     isOffline,
     updateMapCenter,
     findDockById,
     findHazardById,
+    refetchDocks,
+    refetchHazards,
   ]);
 });

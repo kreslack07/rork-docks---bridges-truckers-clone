@@ -43,6 +43,7 @@ import { useMapFilters } from '@/hooks/useMapFilters';
 import { useMapRouting } from '@/hooks/useMapRouting';
 import { getHazardColor as getHazardColorUtil } from '@/utils/hazards';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
+import { cachedStyles } from '@/utils/styleCache';
 
 const AUSTRALIA_REGION: Region = {
   latitude: -28.0,
@@ -86,8 +87,8 @@ export default function MapScreen() {
 
   const { filter, filteredDocks, filteredHazards, cycleFilter, filterLabel, clearFilter } = useMapFilters(docks, hazards);
 
-  const visibleDocks = useMemo(() => filteredDocks.slice(0, 200), [filteredDocks]);
-  const visibleHazards = useMemo(() => filteredHazards.slice(0, 200), [filteredHazards]);
+  const visibleDocks = useMemo(() => filteredDocks.length <= 200 ? filteredDocks : filteredDocks.slice(0, 200), [filteredDocks]);
+  const visibleHazards = useMemo(() => filteredHazards.length <= 200 ? filteredHazards : filteredHazards.slice(0, 200), [filteredHazards]);
   const { activeRoute, routeHazards, isRouting, routeToDock, clearRoute, userLocation, getUserLocation } = useMapRouting(profile, hazards, mapRef);
 
   const handleViewHazards = useCallback(() => {
@@ -119,7 +120,9 @@ export default function MapScreen() {
     setShowVehiclePicker(false);
   }, [updateProfile]);
 
-  const totalReports = useMemo(() => docks.length + hazards.length, [docks.length, hazards.length]);
+  const docksLen = docks.length;
+  const hazardsLen = hazards.length;
+  const totalReports = useMemo(() => docksLen + hazardsLen, [docksLen, hazardsLen]);
 
   const userName = useMemo(() => user?.displayName || profile.name || 'Truck Driver', [user?.displayName, profile.name]);
   const hazardCount = hazards.length;
@@ -263,7 +266,7 @@ export default function MapScreen() {
     }
   }, [isLoading, loadingSpinAnim]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={styles.container}>

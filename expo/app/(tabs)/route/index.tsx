@@ -39,6 +39,7 @@ import { useFavourites } from '@/context/FavouritesContext';
 import { openInWaze } from '@/services/waze';
 import RouteNavigationView from '@/components/route/RouteNavigationView';
 import RoutePlanningView from '@/components/route/RoutePlanningView';
+import { cachedStyles } from '@/utils/styleCache';
 
 export default function RouteScreen() {
   const { colors } = useTheme();
@@ -396,7 +397,7 @@ export default function RouteScreen() {
     if (!next) stopSpeaking();
   }, [voiceActive, setVoiceActive]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <KeyboardAvoidingView

@@ -35,6 +35,7 @@ import { BUSINESS_CATEGORY_LABELS } from '@/constants/categories';
 import { useLiveData } from '@/context/LiveDataContext';
 import { useFavourites } from '@/context/FavouritesContext';
 import { openInWaze } from '@/services/waze';
+import { cachedStyles } from '@/utils/styleCache';
 
 function DockDetailsScreenContent() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -75,7 +76,7 @@ function DockDetailsScreenContent() {
     if (dock?.phone) void Linking.openURL(`tel:${dock.phone}`);
   }, [dock]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   if (!dock) {
     return (

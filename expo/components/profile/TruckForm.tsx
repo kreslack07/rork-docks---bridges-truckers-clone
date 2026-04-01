@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { ThemeColors } from '@/constants/colors';
 import { TRUCK_TYPES } from '@/constants/categories';
 import { TruckProfile } from '@/types';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface TruckFormProps {
   colors: ThemeColors;
@@ -114,7 +115,7 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
     setSaved(true);
   }, [name, heightStr, weightStr, widthStr, selectedType, plateNumber, onSave]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <>

@@ -35,6 +35,7 @@ import { openInWaze } from '@/services/waze';
 import * as Haptics from 'expo-haptics';
 import ClearanceCard from '@/components/hazard/ClearanceCard';
 import CommunitySection from '@/components/hazard/CommunitySection';
+import { cachedStyles } from '@/utils/styleCache';
 
 function HazardDetailsScreenContent() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -60,7 +61,7 @@ function HazardDetailsScreenContent() {
   const disputedCount = useMemo(() => getDisputedCount(id ?? ''), [id, getDisputedCount]);
   const userHasVerified = useMemo(() => hasUserVerified(id ?? '', user?.id ?? ''), [id, user?.id, hasUserVerified]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   if (!hazard) {
     return (

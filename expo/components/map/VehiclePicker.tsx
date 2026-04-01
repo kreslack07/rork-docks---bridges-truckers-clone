@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import * as Haptics from 'expo-haptics';
 import { ThemeColors } from '@/constants/colors';
 import { TRUCK_TYPES } from '@/constants/categories';
 import { TruckProfile } from '@/types';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface VehiclePickerProps {
   colors: ThemeColors;
@@ -31,10 +32,10 @@ function VehiclePickerComponent({
   onTogglePicker,
   onSelectType,
 }: VehiclePickerProps) {
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   const handleSelect = useCallback((t: typeof TRUCK_TYPES[number]) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onSelectType(t.value, t.defaultHeight);
   }, [onSelectType]);
 

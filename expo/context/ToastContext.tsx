@@ -12,6 +12,7 @@ import { X, AlertTriangle, CircleCheck as CheckCircle, Info, WifiOff } from 'luc
 import createContextHook from '@nkzw/create-context-hook';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 
 export type ToastType = 'error' | 'success' | 'info' | 'warning';
 
@@ -121,7 +122,7 @@ export function ToastOverlay() {
     }
   }, [toast, slideAnim, opacityAnim]);
 
-  const styles = useMemo(() => makeToastStyles(colors), [colors]);
+  const styles = cachedStyles(makeToastStyles, colors);
 
   if (!visibleToast) return null;
   const accent = getAccentColor(visibleToast.type, colors);

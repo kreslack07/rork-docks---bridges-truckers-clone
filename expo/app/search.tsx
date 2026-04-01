@@ -22,6 +22,7 @@ import EmptyState from '@/components/EmptyState';
 import { ListSkeletonLoader } from '@/components/SkeletonLoader';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { haversineDistance } from '@/utils/geo';
+import { cachedStyles } from '@/utils/styleCache';
 
 type SearchResult = {
   id: string;
@@ -108,7 +109,7 @@ function SearchScreenContent() {
     return colors.success;
   }, [profile.height, colors]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   const renderItem = useCallback(({ item }: { item: SearchResult }) => {
     const isDock = item.type === 'dock';
