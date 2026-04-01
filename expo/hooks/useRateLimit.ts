@@ -7,6 +7,7 @@ const GC_INTERVAL_MS = 60 * 60 * 1000;
 const MAX_KEY_AGE_MS = 24 * 60 * 60 * 1000;
 
 let gcScheduled = false;
+let _gcIntervalId: ReturnType<typeof setInterval> | null = null;
 
 async function runGarbageCollection(): Promise<void> {
   try {
@@ -39,7 +40,7 @@ function scheduleGC(): void {
   if (gcScheduled) return;
   gcScheduled = true;
   void runGarbageCollection();
-  setInterval(() => {
+  _gcIntervalId = setInterval(() => {
     void runGarbageCollection();
   }, GC_INTERVAL_MS);
 }

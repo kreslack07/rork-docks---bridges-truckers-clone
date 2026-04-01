@@ -130,7 +130,7 @@ function MapDrawerComponent({
 
         <View style={styles.drawerDivider} />
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/(tabs)/profile')} accessibilityLabel="Settings" accessibilityRole="button">
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navTo('/(tabs)/profile/settings')} accessibilityLabel="Settings" accessibilityRole="button">
           <Settings size={20} color={colors.textSecondary} />
           <Text style={styles.drawerItemText}>Settings</Text>
         </TouchableOpacity>

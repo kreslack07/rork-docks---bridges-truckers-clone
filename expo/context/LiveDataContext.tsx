@@ -255,6 +255,13 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   const allHazardsRef = useRef(allHazards);
   allHazardsRef.current = allHazards;
 
+  const latRef = useRef(lat);
+  latRef.current = lat;
+  const lonRef = useRef(lon);
+  lonRef.current = lon;
+  const radiusKmRef = useRef(radiusKm);
+  radiusKmRef.current = radiusKm;
+
   useEffect(() => {
     const now = Date.now();
     let toastKey = '';
@@ -273,15 +280,19 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     }
     lastToastRef.current = { key: toastKey, time: now };
 
+    const currentLat = latRef.current;
+    const currentLon = lonRef.current;
+    const currentRadius = radiusKmRef.current;
+
     if (toastKey === 'offline') {
       logger.log('[LiveData] Both queries failed — falling back to mock + cached data');
-      const mockDocks = getMockDocksNear(lat, lon, radiusKm);
+      const mockDocks = getMockDocksNear(currentLat, currentLon, currentRadius);
       if (mockDocks.length > 0) {
         queryClient.setQueryData(['cachedDocks'], (prev: Dock[] | undefined) =>
           prev && prev.length > 0 ? prev : mockDocks
         );
       }
-      const mockHazards = getMockHazardsNear(lat, lon, radiusKm);
+      const mockHazards = getMockHazardsNear(currentLat, currentLon, currentRadius);
       if (mockHazards.length > 0) {
         queryClient.setQueryData(['cachedHazards'], (prev: Hazard[] | undefined) =>
           prev && prev.length > 0 ? prev : mockHazards
@@ -289,19 +300,19 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
       }
       showToastRef.current('warning', 'Offline Mode', 'Using cached & local data — check your connection');
     } else if (toastKey === 'docks-error') {
-      const fallbackDocks = getMockDocksNear(lat, lon, radiusKm);
+      const fallbackDocks = getMockDocksNear(currentLat, currentLon, currentRadius);
       if (fallbackDocks.length > 0 && allDocksRef.current.length === 0) {
         queryClient.setQueryData(['cachedDocks'], fallbackDocks);
       }
       showToastRef.current('warning', 'Limited Dock Data', 'Live data unavailable — showing known docks');
     } else if (toastKey === 'hazards-error') {
-      const fallbackHazards = getMockHazardsNear(lat, lon, radiusKm);
+      const fallbackHazards = getMockHazardsNear(currentLat, currentLon, currentRadius);
       if (fallbackHazards.length > 0 && allHazardsRef.current.length === 0) {
         queryClient.setQueryData(['cachedHazards'], fallbackHazards);
       }
       showToastRef.current('warning', 'Limited Hazard Data', 'Live data unavailable — showing known hazards');
     }
-  }, [docksError, hazardsError, lat, lon, radiusKm, queryClient]);
+  }, [docksError, hazardsError, queryClient]);
 
   const docksMap = useMemo(() => {
     const map = new Map<string, Dock>();

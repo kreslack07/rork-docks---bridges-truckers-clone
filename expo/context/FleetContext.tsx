@@ -116,7 +116,7 @@ export const [FleetProvider, useFleetContext] = createContextHook(() => {
 
 export function useFleet() {
   const ctx = useFleetContext();
-  return useMemo(() => ({
+  return {
     trucks: ctx.trucks,
     activeTruck: ctx.activeTruck,
     activeTruckId: ctx.activeTruckId,
@@ -126,5 +126,5 @@ export function useFleet() {
     setActiveTruck: ctx.setActiveTruck,
     truckCount: ctx.truckCount,
     isLoading: ctx.isFleetLoading,
-  }), [ctx]);
+  };
 }

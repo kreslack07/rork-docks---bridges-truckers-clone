@@ -9,7 +9,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Search, MapPin, AlertTriangle, Zap, X, Clock, Building2 } from 'lucide-react-native';
+import { Search, MapPin, AlertTriangle, Zap, Weight, X, Clock, Building2 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
@@ -104,10 +104,13 @@ function SearchScreenContent() {
 
   const getHazardColor = useCallback((hazard: Hazard) => {
     const hasClearance = hazard.clearanceHeight < 90;
-    if (hasClearance && hazard.clearanceHeight < profile.height) return colors.danger;
+    const heightBlocked = hasClearance && hazard.clearanceHeight < profile.height;
+    const weightBlocked = hazard.weightLimit ? profile.weight > hazard.weightLimit : false;
+    const widthBlocked = hazard.widthLimit ? profile.width > hazard.widthLimit : false;
+    if (heightBlocked || weightBlocked || widthBlocked) return colors.danger;
     if (hasClearance && hazard.clearanceHeight < profile.height + 0.3) return colors.warning;
     return colors.success;
-  }, [profile.height, colors]);
+  }, [profile.height, profile.weight, profile.width, colors]);
 
   const styles = cachedStyles(makeStyles, colors);
 
@@ -129,6 +132,8 @@ function SearchScreenContent() {
         ]}>
           {isDock ? (
             <MapPin size={18} color={colors.primary} />
+          ) : hazard?.type === 'weight_limit' ? (
+            <Weight size={18} color={getHazardColor(hazard)} />
           ) : hazard?.type === 'bridge' ? (
             <AlertTriangle size={18} color={getHazardColor(hazard)} />
           ) : (
@@ -151,7 +156,9 @@ function SearchScreenContent() {
           {hazard && (
             <View style={styles.resultTags}>
               <Text style={[styles.resultClearance, { color: getHazardColor(hazard) }]}>
-                {hazard.clearanceHeight.toFixed(1)}m clearance
+                {hazard.type === 'weight_limit'
+                  ? `${hazard.weightLimit ?? '?'}t weight limit`
+                  : `${hazard.clearanceHeight.toFixed(1)}m clearance`}
               </Text>
             </View>
           )}
