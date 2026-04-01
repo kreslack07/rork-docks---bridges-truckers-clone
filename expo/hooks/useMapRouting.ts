@@ -17,16 +17,22 @@ export function useMapRouting(profile: TruckProfile, hazards: Hazard[], mapRef: 
 
   const routeToDockMutation = useMutation({
     mutationFn: async (dock: Dock) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       if (isRoutingOnCooldown()) {
         const remainSec = Math.ceil(getCooldownRemainingMs() / 1000);
-        showToast('warning', 'Routing Busy', `Routing servers are recovering. Try again in ${remainSec}s.`);
+        showToast('warning', 'Routing Busy', `Servers recovering. Please wait ${remainSec}s then try again.`);
         return null;
       }
       const origin = await getUserLocation();
-      if (!origin) return null;
+      if (!origin) {
+        showToast('error', 'Location Unavailable', 'Could not determine your location. Check your settings.');
+        return null;
+      }
       const dest = { latitude: dock.latitude, longitude: dock.longitude };
       const result = await getRoute(origin, dest);
+      if (!result) {
+        showToast('error', 'Route Failed', 'Could not calculate a route. Try again shortly.');
+      }
       return result ? { result, dock } : null;
     },
     onSuccess: (data) => {
@@ -35,7 +41,10 @@ export function useMapRouting(profile: TruckProfile, hazards: Hazard[], mapRef: 
       setActiveRoute(result);
       const hazardAnalysis = analyzeRouteHazards(result.coordinates, profile.height, hazardsRef.current, 0.5, profile.weight, profile.width);
       setRouteHazards(hazardAnalysis.blockedHazards);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (hazardAnalysis.blockedHazards.length > 0) {
+        showToast('warning', 'Hazards on Route', `${hazardAnalysis.blockedHazards.length} blocked hazard${hazardAnalysis.blockedHazards.length !== 1 ? 's' : ''} detected on this route`);
+      }
       if (mapRef.current) {
         setTimeout(() => {
           mapRef.current?.fitToCoordinates(result.coordinates, {

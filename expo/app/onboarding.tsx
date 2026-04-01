@@ -11,7 +11,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -207,21 +206,9 @@ export default function OnboardingScreen() {
           <View style={styles.infoStep}>
             {step === 0 ? (
               <View style={styles.appIconWrap}>
-                {(() => {
-                  let iconSource: any = null;
-                  try { iconSource = require('@/assets/images/icon.png'); } catch { iconSource = null; }
-                  return iconSource ? (
-                    <Image
-                      source={iconSource}
-                      style={styles.appIconImage}
-                      accessibilityLabel="App icon"
-                    />
-                  ) : (
-                    <View style={[styles.appIconImage, { backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
-                      <Truck size={48} color={colors.background} />
-                    </View>
-                  );
-                })()
+                <View style={[styles.appIconImage, { backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
+                  <Truck size={48} color={colors.background} />
+                </View>
               </View>
             ) : (
               <View style={styles.iconCircle}>
@@ -432,8 +419,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   skipBtn: {
     alignSelf: 'flex-end',
-    paddingVertical: 8,
-    paddingHorizontal: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 22,
     backgroundColor: colors.elevated,
     borderRadius: 20,
     borderWidth: 1,
@@ -441,8 +428,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   skipText: {
     color: colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '600' as const,
+    fontSize: 15,
+    fontWeight: '700' as const,
   },
   content: {
     flex: 1,

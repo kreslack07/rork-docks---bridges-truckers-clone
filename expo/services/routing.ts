@@ -48,9 +48,10 @@ export interface LiveRouteResult {
   summary: string;
 }
 
-export async function geocodeAddress(query: string, signal?: AbortSignal): Promise<GeocodedPlace[]> {
+export async function geocodeAddress(query: string, signal?: AbortSignal, countryCode: string = 'au'): Promise<GeocodedPlace[]> {
   try {
-    const url = `${NOMINATIM_BASE}?q=${encodeURIComponent(query)}&format=json&countrycodes=au&limit=8&addressdetails=1`;
+    const ccParam = countryCode ? `&countrycodes=${countryCode}` : '';
+    const url = `${NOMINATIM_BASE}?q=${encodeURIComponent(query)}&format=json${ccParam}&limit=8&addressdetails=1`;
     logger.log('[Routing] Geocoding:', query);
 
     const response = await fetch(url, {

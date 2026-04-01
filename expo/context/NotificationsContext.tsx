@@ -90,7 +90,7 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
   });
 
   const { updateValue: updatePrefsValue } = prefsPersisted;
-  const { updateValue: updateHistoryValue, setValue: setHistoryValue } = historyPersisted;
+  const { updateValue: updateHistoryValue } = historyPersisted;
 
   const [pushToken, setPushToken] = useState<string | null>(null);
   const isRegisteredRef = useRef<boolean>(false);
@@ -202,8 +202,8 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
   }, [updateHistoryValue]);
 
   const clearNotifications = useCallback(() => {
-    setHistoryValue([]);
-  }, [setHistoryValue]);
+    updateHistoryValue(() => []);
+  }, [updateHistoryValue]);
 
   const unreadCount = useMemo(() => historyPersisted.value.filter(n => !n.read).length, [historyPersisted.value]);
 
