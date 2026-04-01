@@ -21,11 +21,10 @@ export function useMapFilters(docks: Dock[], hazards: Hazard[]) {
   }, [filter, hazards]);
 
   const cycleFilter = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const order: MapFilter[] = ['all', 'docks', 'bridges', 'wires', 'weight'];
-    const idx = order.indexOf(filter);
-    setFilter(order[(idx + 1) % order.length]);
-  }, [filter]);
+    setFilter(prev => order[(order.indexOf(prev) + 1) % order.length]);
+  }, []);
 
   const filterLabel = useMemo(() => {
     switch (filter) {

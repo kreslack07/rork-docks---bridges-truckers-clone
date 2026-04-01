@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
+import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import {
   Truck,
@@ -71,16 +72,15 @@ export default function ProfileScreen() {
 
   const styles = cachedStyles(makeStyles, colors);
 
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    try {
+  const refreshMutation = useMutation({
+    mutationFn: async () => {
       await Promise.all([refetchDocks(), refetchHazards()]);
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [refetchDocks, refetchHazards]);
+    },
+  });
+
+  const handleRefresh = useCallback(() => {
+    refreshMutation.mutate();
+  }, [refreshMutation]);
 
   return (
     <ScrollView
@@ -89,7 +89,7 @@ export default function ProfileScreen() {
       keyboardShouldPersistTaps="handled"
       refreshControl={
         <RefreshControl
-          refreshing={isRefreshing}
+          refreshing={refreshMutation.isPending}
           onRefresh={handleRefresh}
           tintColor={colors.primary}
           colors={[colors.primary]}
