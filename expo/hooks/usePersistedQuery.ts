@@ -69,19 +69,27 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
 
   const { mutate } = saveMutation;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latestValueRef = useRef<T>(value);
-  latestValueRef.current = value;
+  const pendingValueRef = useRef<T | null>(null);
 
   useEffect(() => {
     return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      if (pendingValueRef.current !== null) {
+        mutate(pendingValueRef.current);
+        pendingValueRef.current = null;
+      }
     };
-  }, []);
+  }, [mutate]);
 
   const debouncedPersist = useCallback((newValue: T) => {
+    pendingValueRef.current = newValue;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       debounceRef.current = null;
+      pendingValueRef.current = null;
       mutate(newValue);
     }, DEBOUNCE_MS);
   }, [mutate]);

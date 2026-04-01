@@ -46,10 +46,11 @@ const controllerRegistry = new Map<string, AbortController>();
 
 if (__DEV__) {
   const g = globalThis as any;
-  if (g.__OVERPASS_HOT_RESET__) {
-    resetOverpassState();
+  if (!g.__OVERPASS_INITIALIZED__) {
+    g.__OVERPASS_INITIALIZED__ = true;
+  } else {
+    console.log('[Overpass] HMR detected — preserving rate-limit state (failures:', consecutiveFailures, ')');
   }
-  g.__OVERPASS_HOT_RESET__ = true;
 }
 
 export function getAbortSignal(key: string = 'default'): AbortSignal {

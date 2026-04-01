@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -32,6 +32,7 @@ if (Platform.OS !== 'web') {
 }
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 import { BUSINESS_CATEGORY_LABELS } from '@/constants/categories';
 import { BusinessCategory } from '@/types';
 import { useRateLimit } from '@/hooks/useRateLimit';
@@ -114,8 +115,9 @@ function ReportDockScreenContent() {
   }, []);
 
   const reportMutation = trpc.docks.report.useMutation({
-    onSuccess: (_data) => {
+    onSuccess: (data) => {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const persisted = (data as { persisted?: boolean }).persisted;
       addLocalNotification(
         'Dock Report Submitted',
         `Your report for "${businessName.trim()}" at ${address.trim()} is being reviewed.`,
@@ -123,7 +125,9 @@ function ReportDockScreenContent() {
       );
       Alert.alert(
         'Dock Submitted',
-        'Thank you! Your dock report will be reviewed and added to the database.',
+        persisted
+          ? 'Thank you! Your dock report has been saved and will be reviewed.'
+          : 'Thank you! Your report was recorded locally. It will sync when the server is available.',
         [{ text: 'OK', onPress: () => router.back() }],
       );
     },
@@ -190,7 +194,7 @@ function ReportDockScreenContent() {
     reportMutation.mutate(payload);
   }, [businessName, dockName, category, dockType, address, city, state, operatingHours, phone, accessNotes, latStr, lonStr, rateLimit, reportMutation]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <ScrollView

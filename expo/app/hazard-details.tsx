@@ -30,7 +30,7 @@ import { ThemeColors } from '@/constants/colors';
 import { useLiveData } from '@/context/LiveDataContext';
 import { useTruckProfile } from '@/context/UserPreferencesContext';
 import { useAuth } from '@/context/AuthContext';
-import { useCommunity } from '@/context/LiveDataContext';
+import { useCommunityData } from '@/hooks/useCommunityData';
 import { openInWaze } from '@/services/waze';
 import * as Haptics from 'expo-haptics';
 import ClearanceCard from '@/components/hazard/ClearanceCard';
@@ -52,7 +52,7 @@ function HazardDetailsScreenContent() {
     getConfirmedCount,
     getDisputedCount,
     hasUserVerified,
-  } = useCommunity();
+  } = useCommunityData();
 
   const hazard = useMemo(() => findHazardById(id ?? ''), [id, findHazardById]);
   const verifications = useMemo(() => getVerificationsForHazard(id ?? ''), [id, getVerificationsForHazard]);

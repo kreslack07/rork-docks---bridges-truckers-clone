@@ -12,33 +12,6 @@ import { logger } from '@/utils/logger';
 import { DOCKS as MOCK_DOCKS } from '@/mocks/docks';
 import { HAZARDS as MOCK_HAZARDS } from '@/mocks/hazards';
 import { useNotifications } from '@/context/NotificationsContext';
-import { usePersistedQuery } from '@/hooks/usePersistedQuery';
-
-export interface HazardVerification {
-  id: string;
-  hazardId: string;
-  userId: string;
-  userName: string;
-  status: 'confirmed' | 'disputed' | 'updated';
-  newClearanceHeight?: number;
-  comment: string;
-  timestamp: number;
-}
-
-export interface CommunityReport {
-  id: string;
-  hazardId: string;
-  userId: string;
-  userName: string;
-  reportType: 'removed' | 'changed' | 'dangerous' | 'inaccurate';
-  description: string;
-  timestamp: number;
-  upvotes: number;
-  upvotedBy: string[];
-}
-
-const VERIFICATIONS_KEY = 'community_verifications';
-const REPORTS_KEY = 'community_reports';
 
 
 export interface MapRegionBounds {
@@ -139,20 +112,6 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   const { showToast } = useToast();
   const { addLocalNotification, prefs } = useNotifications();
 
-  const verificationsPersisted = usePersistedQuery<HazardVerification[]>({
-    key: VERIFICATIONS_KEY,
-    queryKey: ['communityVerifications'],
-    defaultValue: [],
-  });
-
-  const reportsPersisted = usePersistedQuery<CommunityReport[]>({
-    key: REPORTS_KEY,
-    queryKey: ['communityReports'],
-    defaultValue: [],
-  });
-
-  const { updateValue: updateVerifications } = verificationsPersisted;
-  const { updateValue: updateReports } = reportsPersisted;
   const showToastRef = useRef(showToast);
   showToastRef.current = showToast;
   const queryClient = useQueryClient();
@@ -406,15 +365,26 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     mapCenterRef.current = mapCenter;
   }, [mapCenter]);
 
+  const prevZoomRef = useRef<number>(mapRegion.latitudeDelta);
+
   const updateMapCenter = useCallback((coord: RouteCoordinate, region?: MapRegionBounds) => {
     const current = mapCenterRef.current;
     const dist = Math.abs(coord.latitude - current.latitude) + Math.abs(coord.longitude - current.longitude);
-    if (dist > 0.2) {
-      logger.log('[LiveData] Map center updated, will refetch');
-      setMapCenter(coord);
-    }
+    const panChanged = dist > 0.2;
+
+    let zoomChanged = false;
     if (region) {
+      const zoomRatio = region.latitudeDelta / prevZoomRef.current;
+      zoomChanged = zoomRatio < 0.5 || zoomRatio > 2.0;
+      if (zoomChanged) {
+        prevZoomRef.current = region.latitudeDelta;
+      }
       setMapRegion(region);
+    }
+
+    if (panChanged || zoomChanged) {
+      logger.log('[LiveData] Map updated — pan:', panChanged, 'zoom:', zoomChanged);
+      setMapCenter(coord);
     }
   }, []);
 
@@ -447,105 +417,6 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   const refetchDocks = docksQuery.refetch;
   const refetchHazards = hazardsQuery.refetch;
 
-  const addVerification = useCallback((
-    hazardId: string,
-    userId: string,
-    userName: string,
-    status: HazardVerification['status'],
-    comment: string,
-    newClearanceHeight?: number,
-  ) => {
-    const newVerification: HazardVerification = {
-      id: `ver_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      hazardId,
-      userId,
-      userName,
-      status,
-      comment,
-      newClearanceHeight,
-      timestamp: Date.now(),
-    };
-    updateVerifications(prev => [newVerification, ...prev].slice(0, 200));
-    console.log('[Community] Verification added:', newVerification.id, status);
-    return newVerification;
-  }, [updateVerifications]);
-
-  const addCommunityReport = useCallback((
-    hazardId: string,
-    userId: string,
-    userName: string,
-    reportType: CommunityReport['reportType'],
-    description: string,
-  ) => {
-    const newReport: CommunityReport = {
-      id: `rep_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      hazardId,
-      userId,
-      userName,
-      reportType,
-      description,
-      timestamp: Date.now(),
-      upvotes: 0,
-      upvotedBy: [],
-    };
-    updateReports(prev => [newReport, ...prev].slice(0, 200));
-    console.log('[Community] Report added:', newReport.id, reportType);
-    return newReport;
-  }, [updateReports]);
-
-  const upvoteReport = useCallback((reportId: string, userId: string) => {
-    updateReports(prev => prev.map(r => {
-      if (r.id === reportId && !r.upvotedBy.includes(userId)) {
-        return { ...r, upvotes: r.upvotes + 1, upvotedBy: [...r.upvotedBy, userId] };
-      }
-      return r;
-    }));
-  }, [updateReports]);
-
-  const verificationsByHazard = useMemo(() => {
-    const map = new Map<string, HazardVerification[]>();
-    for (const v of verificationsPersisted.value) {
-      const existing = map.get(v.hazardId);
-      if (existing) existing.push(v);
-      else map.set(v.hazardId, [v]);
-    }
-    return map;
-  }, [verificationsPersisted.value]);
-
-  const getVerificationsForHazard = useCallback((hazardId: string) => {
-    return verificationsByHazard.get(hazardId) ?? [];
-  }, [verificationsByHazard]);
-
-  const reportsByHazard = useMemo(() => {
-    const map = new Map<string, CommunityReport[]>();
-    for (const r of reportsPersisted.value) {
-      const existing = map.get(r.hazardId);
-      if (existing) existing.push(r);
-      else map.set(r.hazardId, [r]);
-    }
-    return map;
-  }, [reportsPersisted.value]);
-
-  const getReportsForHazard = useCallback((hazardId: string) => {
-    return reportsByHazard.get(hazardId) ?? [];
-  }, [reportsByHazard]);
-
-  const getVerificationCount = useCallback((hazardId: string) => {
-    return (verificationsByHazard.get(hazardId) ?? []).length;
-  }, [verificationsByHazard]);
-
-  const getConfirmedCount = useCallback((hazardId: string) => {
-    return (verificationsByHazard.get(hazardId) ?? []).filter(v => v.status === 'confirmed').length;
-  }, [verificationsByHazard]);
-
-  const getDisputedCount = useCallback((hazardId: string) => {
-    return (verificationsByHazard.get(hazardId) ?? []).filter(v => v.status === 'disputed').length;
-  }, [verificationsByHazard]);
-
-  const hasUserVerified = useCallback((hazardId: string, userId: string) => {
-    return (verificationsByHazard.get(hazardId) ?? []).some(v => v.userId === userId);
-  }, [verificationsByHazard]);
-
   return useMemo(() => ({
     docks: allDocks,
     hazards: allHazards,
@@ -559,17 +430,6 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     findHazardById,
     refetchDocks,
     refetchHazards,
-    verifications: verificationsPersisted.value,
-    reports: reportsPersisted.value,
-    addVerification,
-    addReport: addCommunityReport,
-    upvoteReport,
-    getVerificationsForHazard,
-    getReportsForHazard,
-    getVerificationCount,
-    getConfirmedCount,
-    getDisputedCount,
-    hasUserVerified,
   }), [
     allDocks,
     allHazards,
@@ -583,33 +443,5 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     findHazardById,
     refetchDocks,
     refetchHazards,
-    verificationsPersisted.value,
-    reportsPersisted.value,
-    addVerification,
-    addCommunityReport,
-    upvoteReport,
-    getVerificationsForHazard,
-    getReportsForHazard,
-    getVerificationCount,
-    getConfirmedCount,
-    getDisputedCount,
-    hasUserVerified,
   ]);
 });
-
-export function useCommunity() {
-  const ctx = useLiveData();
-  return useMemo(() => ({
-    verifications: ctx.verifications,
-    reports: ctx.reports,
-    addVerification: ctx.addVerification,
-    addReport: ctx.addReport,
-    upvoteReport: ctx.upvoteReport,
-    getVerificationsForHazard: ctx.getVerificationsForHazard,
-    getReportsForHazard: ctx.getReportsForHazard,
-    getVerificationCount: ctx.getVerificationCount,
-    getConfirmedCount: ctx.getConfirmedCount,
-    getDisputedCount: ctx.getDisputedCount,
-    hasUserVerified: ctx.hasUserVerified,
-  }), [ctx]);
-}

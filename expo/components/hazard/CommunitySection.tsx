@@ -15,7 +15,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { ThemeColors } from '@/constants/colors';
 import { Hazard } from '@/types';
-import { HazardVerification, CommunityReport } from '@/context/LiveDataContext';
+import { HazardVerification, CommunityReport } from '@/hooks/useCommunityData';
 
 function formatTimestamp(ts: number): string {
   const d = new Date(ts);

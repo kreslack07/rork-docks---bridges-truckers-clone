@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -34,6 +34,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useRateLimit } from '@/hooks/useRateLimit';
 import { useNotifications } from '@/context/NotificationsContext';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 
 type HazardType = 'bridge' | 'wire' | 'weight_limit';
 
@@ -101,8 +102,9 @@ function ReportHazardScreenContent() {
   }, []);
 
   const reportMutation = trpc.hazards.report.useMutation({
-    onSuccess: (_data) => {
+    onSuccess: (data) => {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const persisted = (data as { persisted?: boolean }).persisted;
       addLocalNotification(
         'Hazard Report Submitted',
         `Your report for "${name.trim()}" on ${road.trim()} is being reviewed.`,
@@ -110,7 +112,9 @@ function ReportHazardScreenContent() {
       );
       Alert.alert(
         'Report Submitted',
-        'Thank you! Your hazard report will be reviewed and added to the database.',
+        persisted
+          ? 'Thank you! Your hazard report has been saved and will be reviewed.'
+          : 'Thank you! Your report was recorded locally. It will sync when the server is available.',
         [{ text: 'OK', onPress: () => router.back() }],
       );
     },
@@ -175,7 +179,7 @@ function ReportHazardScreenContent() {
     reportMutation.mutate(payload);
   }, [name, road, city, state, type, heightStr, latStr, lonStr, description, rateLimit, reportMutation]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <ScrollView

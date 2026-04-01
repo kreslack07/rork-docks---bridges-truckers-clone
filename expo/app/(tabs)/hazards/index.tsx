@@ -17,7 +17,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import { useLiveData } from '@/context/LiveDataContext';
 import { useTruckProfile } from '@/context/UserPreferencesContext';
-import { useCommunity } from '@/context/LiveDataContext';
+import { useCommunityData } from '@/hooks/useCommunityData';
 import { Hazard, HazardFilter } from '@/types';
 import { ListSkeletonLoader } from '@/components/SkeletonLoader';
 import EmptyState from '@/components/EmptyState';
@@ -33,7 +33,7 @@ export default function HazardsScreen() {
   const { colors } = useTheme();
   const { profile } = useTruckProfile();
   const { hazards, isLoadingHazards, refetchHazards } = useLiveData();
-  const { getConfirmedCount, getDisputedCount } = useCommunity();
+  const { getConfirmedCount, getDisputedCount } = useCommunityData();
   const [search, setSearch] = useState<string>('');
   const [filter, setFilter] = useState<HazardFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('nearest');

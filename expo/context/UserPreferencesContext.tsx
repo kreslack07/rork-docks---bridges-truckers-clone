@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import { TruckProfile } from '@/types';
 import { usePersistedQuery, usePersistedBoolQuery, usePersistedStringQuery } from '@/hooks/usePersistedQuery';
@@ -298,28 +298,26 @@ export function useVoice() {
 export function useUnits() {
   const { unitSystem, setUnitSystem } = useUserPreferences();
   const isMetric = unitSystem === 'metric';
-  const isMetricRef = useRef(isMetric);
-  isMetricRef.current = isMetric;
 
   const formatHeight = useCallback((metres: number): string => {
-    if (isMetricRef.current) return `${metres.toFixed(1)}m`;
+    if (isMetric) return `${metres.toFixed(1)}m`;
     const totalInches = metres / 0.0254;
     const feet = Math.floor(totalInches / 12);
     const inches = Math.round(totalInches % 12);
     return `${feet}'${inches}"`;
-  }, []);
+  }, [isMetric]);
 
   const formatWeight = useCallback((tonnes: number): string => {
-    if (isMetricRef.current) return `${tonnes.toFixed(1)}t`;
+    if (isMetric) return `${tonnes.toFixed(1)}t`;
     const lbs = tonnes * 2204.62;
     return lbs >= 1000 ? `${(lbs / 1000).toFixed(1)}k lbs` : `${Math.round(lbs)} lbs`;
-  }, []);
+  }, [isMetric]);
 
   const formatDistance = useCallback((km: number): string => {
-    if (isMetricRef.current) return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
+    if (isMetric) return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
     const miles = km * 0.621371;
     return miles < 0.1 ? `${Math.round(miles * 5280)}ft` : `${miles.toFixed(1)}mi`;
-  }, []);
+  }, [isMetric]);
 
   const heightUnit = isMetric ? 'm' : 'ft';
   const weightUnit = isMetric ? 't' : 'lbs';
