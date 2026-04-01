@@ -302,7 +302,7 @@ export default function ProfileScreen() {
         </Text>
       </View>
 
-      <Text style={styles.versionText}>Docks & Bridges Trucker v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+      <Text style={styles.versionText}>Docks & Bridges Truckers v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
     </ScrollView>
   );
 }

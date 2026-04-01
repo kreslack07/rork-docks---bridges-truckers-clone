@@ -1,12 +1,13 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Stack } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 
 export default function TermsOfServiceScreen() {
   const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={styles.container}>

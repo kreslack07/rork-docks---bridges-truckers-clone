@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ import { useVoice, useUnits } from '@/context/UserPreferencesContext';
 import AppearanceSection from '@/components/profile/AppearanceSection';
 import VoiceSection from '@/components/profile/VoiceSection';
 import NotificationSettings from '@/components/profile/NotificationSettings';
+import { cachedStyles } from '@/utils/styleCache';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -84,7 +85,7 @@ export default function SettingsScreen() {
     );
   }, [deleteAccount]);
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <ScrollView
@@ -247,7 +248,7 @@ export default function SettingsScreen() {
         </>
       )}
 
-      <Text style={styles.versionText}>Docks & Bridges Trucker v1.0.0</Text>
+      <Text style={styles.versionText}>Docks & Bridges Truckers v1.0.0</Text>
     </ScrollView>
   );
 }

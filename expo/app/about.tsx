@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import { Image } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
+import { cachedStyles } from '@/utils/styleCache';
 
 const APP_VERSION = '1.0.0';
 const BUILD_NUMBER = '1';
@@ -45,7 +46,7 @@ const CHANGELOG = [
 
 function AboutScreenContent() {
   const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
@@ -59,7 +60,7 @@ function AboutScreenContent() {
             accessibilityLabel="App icon"
           />
         </View>
-        <Text style={styles.appName}>Docks & Bridges Trucker</Text>
+        <Text style={styles.appName}>Docks & Bridges Truckers</Text>
         <Text style={styles.versionText}>Version {APP_VERSION} ({BUILD_NUMBER})</Text>
         <Text style={styles.tagline}>
           Australia's trusted clearance & dock companion for professional drivers
@@ -147,7 +148,7 @@ function AboutScreenContent() {
 
       <Text style={styles.copyrightText}>
         Made for Australian truck drivers{'\n'}
-        {'\u00A9'} 2026 Docks & Bridges Trucker
+        {'\u00A9'} 2026 Docks & Bridges Truckers
       </Text>
     </ScrollView>
   );
