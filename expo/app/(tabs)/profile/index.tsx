@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -41,7 +42,7 @@ export default function ProfileScreen() {
   const { colors } = useTheme();
   const { profile, updateProfile } = useTruckProfile();
   const { favouriteDockIds, recentRoutes, clearRecentRoutes, favouriteCount } = useFavourites();
-  const { docks, isOffline } = useLiveData();
+  const { docks, isOffline, refetchDocks, refetchHazards } = useLiveData();
   const { truckCount, activeTruck } = useFleet();
 
   const favouriteDocks = useMemo(() => {
@@ -69,11 +70,30 @@ export default function ProfileScreen() {
 
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refetchDocks(), refetchHazards()]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetchDocks, refetchHazards]);
+
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.scrollContent}
       keyboardShouldPersistTaps="handled"
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          tintColor={colors.primary}
+          colors={[colors.primary]}
+        />
+      }
     >
       <View style={styles.heroSection}>
         <View style={styles.truckIconContainer}>

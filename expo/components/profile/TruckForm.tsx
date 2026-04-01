@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -36,6 +36,11 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
   const [plateNumber, setPlateNumber] = useState<string>(profile.plateNumber);
   const [selectedType, setSelectedType] = useState<TruckProfile['type']>(profile.type);
   const [saved, setSaved] = useState<boolean>(false);
+  const onSaveRef = useRef(onSave);
+  onSaveRef.current = onSave;
+
+  const localStateRef = useRef({ name, heightStr, weightStr, widthStr, plateNumber, selectedType });
+  localStateRef.current = { name, heightStr, weightStr, widthStr, plateNumber, selectedType };
 
   useEffect(() => {
     setName(profile.name);
@@ -52,6 +57,30 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
     return () => clearTimeout(timer);
   }, [saved]);
 
+  useEffect(() => {
+    return () => {
+      const s = localStateRef.current;
+      const height = parseFloat(s.heightStr);
+      const weight = parseFloat(s.weightStr);
+      const width = parseFloat(s.widthStr);
+      if (
+        !isNaN(height) && height >= 1 && height <= 10 &&
+        !isNaN(weight) && weight >= 0.5 && weight <= 200 &&
+        !isNaN(width) && width >= 1 && width <= 5
+      ) {
+        console.log('[TruckForm] Auto-saving on unmount');
+        onSaveRef.current({
+          name: s.name,
+          height,
+          weight,
+          width,
+          type: s.selectedType,
+          plateNumber: s.plateNumber,
+        });
+      }
+    };
+  }, []);
+
   const handleSelectType = useCallback((type: TruckProfile['type']) => {
     setSelectedType(type);
     const truckType = TRUCK_TYPES.find((t) => t.value === type);
@@ -60,7 +89,7 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
       setWeightStr(truckType.defaultWeight.toString());
       setWidthStr(truckType.defaultWidth.toString());
     }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, []);
 
   const handleSave = useCallback(() => {
@@ -81,7 +110,7 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
     }
 
     onSave({ name, height, weight, width, type: selectedType, plateNumber });
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSaved(true);
   }, [name, heightStr, weightStr, widthStr, selectedType, plateNumber, onSave]);
 

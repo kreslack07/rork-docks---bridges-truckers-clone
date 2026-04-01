@@ -61,7 +61,7 @@ export default function RouteScreen() {
   const [destination, setDestination] = useState<string>('');
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [localRouteError, setLocalRouteError] = useState<string | null>(null);
-  const { userLocation, getUserLocation: getCurrentLocation } = useUserLocation();
+  const { userLocation, getUserLocation: getCurrentLocation, locationError, promptOpenSettings } = useUserLocation();
   const [selectedDestCoord, setSelectedDestCoord] = useState<RouteCoordinate | null>(null);
   const { isVoiceEnabled: voiceActive, setVoiceEnabled: setVoiceActive } = useVoice();
   const { addRecentRoute } = useFavourites();
@@ -257,7 +257,14 @@ export default function RouteScreen() {
     try {
       const origin = await getCurrentLocation();
       if (!origin) {
-        setLocalRouteError('Could not determine your location. Please try again.');
+        if (locationError === 'denied') {
+          setLocalRouteError('Location access denied. Please enable location permissions in your device settings to calculate routes.');
+          promptOpenSettings();
+        } else if (locationError === 'timeout') {
+          setLocalRouteError('Location request timed out. Please check you have a clear view of the sky and try again.');
+        } else {
+          setLocalRouteError('Could not determine your location. Please check your location settings and try again.');
+        }
         return;
       }
 
@@ -278,7 +285,7 @@ export default function RouteScreen() {
       console.log('[Route] Route error:', error);
       setLocalRouteError('Something went wrong. Please try again.');
     }
-  }, [selectedDestCoord, getCurrentLocation, profile.height, profile.weight, profile.width, fadeAnim, computeRoute, clearLiveRoute, destination]);
+  }, [selectedDestCoord, getCurrentLocation, locationError, promptOpenSettings, profile.height, profile.weight, profile.width, fadeAnim, computeRoute, clearLiveRoute, destination]);
 
   const handleStartNavigation = useCallback(async () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);

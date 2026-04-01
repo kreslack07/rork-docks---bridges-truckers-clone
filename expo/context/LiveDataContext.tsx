@@ -228,6 +228,7 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   const isOffline = !!(docksQuery.error && hazardsQuery.error);
 
   const prevHazardIdsRef = useRef<Set<string>>(new Set());
+  const prevDockIdsRef = useRef<Set<string>>(new Set());
   const addLocalNotificationRef = useRef(addLocalNotification);
   addLocalNotificationRef.current = addLocalNotification;
   const prefsRef = useRef(prefs);
@@ -261,6 +262,25 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     }
     prevHazardIdsRef.current = currentIds;
   }, [allHazards]);
+
+  useEffect(() => {
+    if (!allDocks.length) return;
+    const currentIds = new Set(allDocks.map(d => d.id));
+    const prevIds = prevDockIdsRef.current;
+
+    if (prevIds.size > 0 && prefsRef.current.newDocks) {
+      const newDocks = allDocks.filter(d => !prevIds.has(d.id));
+      if (newDocks.length > 0 && newDocks.length <= 10) {
+        addLocalNotificationRef.current(
+          'New Docks Nearby',
+          `${newDocks.length} new dock${newDocks.length !== 1 ? 's' : ''} found: ${newDocks.slice(0, 3).map(d => d.name).join(', ')}`,
+          'dock',
+        );
+        logger.log('[LiveData] Notified about', newDocks.length, 'new docks');
+      }
+    }
+    prevDockIdsRef.current = currentIds;
+  }, [allDocks]);
 
   const lastToastRef = useRef<{ key: string; time: number }>({ key: '', time: 0 });
   const allDocksRef = useRef(allDocks);
