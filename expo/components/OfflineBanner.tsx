@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import { WifiOff, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
+import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface OfflineBannerProps {
   isOffline: boolean;
@@ -23,7 +25,7 @@ export default function OfflineBanner({ isOffline, onRetry }: OfflineBannerProps
 
   if (!isOffline) return null;
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <Animated.View style={[styles.container, { transform: [{ translateY }] }]}>
@@ -40,7 +42,7 @@ export default function OfflineBanner({ isOffline, onRetry }: OfflineBannerProps
   );
 }
 
-const makeStyles = (colors: any) => StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     position: 'absolute',
     top: 0,

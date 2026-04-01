@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Moon, Sun, Monitor } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
 import { ThemeMode } from '@/context/ThemeContext';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface AppearanceSectionProps {
   colors: ThemeColors;
@@ -18,7 +19,7 @@ const THEME_OPTIONS: { key: ThemeMode; label: string; icon: typeof Moon }[] = [
 ];
 
 function AppearanceSection({ colors, mode, isDark, onThemeChange }: AppearanceSectionProps) {
-  const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={styles.section}>

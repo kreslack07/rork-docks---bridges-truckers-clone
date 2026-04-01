@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { Route, AlertTriangle, X } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 import { platformShadow } from '@/utils/shadows';
 import { LiveRouteResult, formatDistance, formatDuration } from '@/services/routing';
 import { Hazard } from '@/types';
@@ -26,7 +27,7 @@ function RouteBannerComponent({
   insetTop,
   onClear,
 }: RouteBannerProps) {
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={[styles.routeBanner, { top: insetTop + 70 }]}>

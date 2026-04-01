@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { Radio, Square } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 import { platformShadow } from '@/utils/shadows';
 import { NavigationProgress } from '@/services/live-tracking';
 import { formatDistance, formatDuration } from '@/services/routing';
@@ -24,7 +25,7 @@ function LiveNavBannerComponent({
   insetTop,
   onStop,
 }: LiveNavBannerProps) {
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={[styles.liveNavBanner, { top: insetTop + 70 }]}>

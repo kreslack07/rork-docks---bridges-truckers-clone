@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { WifiOff, RefreshCw, CloudOff } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
+import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface NetworkErrorStateProps {
   message?: string;
@@ -17,7 +19,7 @@ export default function NetworkErrorState({
   compact = false,
 }: NetworkErrorStateProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   if (compact) {
     return (
@@ -64,7 +66,7 @@ export default function NetworkErrorState({
   );
 }
 
-const makeStyles = (colors: any) => StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',

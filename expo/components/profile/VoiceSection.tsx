@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Volume2, VolumeX } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface VoiceSectionProps {
   colors: ThemeColors;
@@ -10,7 +11,7 @@ interface VoiceSectionProps {
 }
 
 function VoiceSection({ colors, voiceOn, onToggle }: VoiceSectionProps) {
-  const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={styles.section}>

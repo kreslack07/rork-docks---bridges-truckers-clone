@@ -1,7 +1,8 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { X } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 import { platformShadow } from '@/utils/shadows';
 
 interface FilterIndicatorProps {
@@ -12,7 +13,7 @@ interface FilterIndicatorProps {
 }
 
 function FilterIndicatorComponent({ colors, label, insetTop, onClear }: FilterIndicatorProps) {
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={[styles.container, { top: insetTop + 12 }]}>

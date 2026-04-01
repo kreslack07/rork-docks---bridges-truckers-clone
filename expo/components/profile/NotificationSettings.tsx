@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Bell } from 'lucide-react-native';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 
 interface NotificationPrefs {
   hazardAlerts: boolean;
@@ -17,7 +18,7 @@ interface NotificationSettingsProps {
 }
 
 function NotificationSettings({ colors, prefs, unreadCount, onUpdatePrefs }: NotificationSettingsProps) {
-  const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={styles.section}>

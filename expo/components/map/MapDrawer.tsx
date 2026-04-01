@@ -20,6 +20,7 @@ import {
   Compass,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 import { ThemeColors } from '@/constants/colors';
 import { cachedStyles } from '@/utils/styleCache';
 
@@ -152,7 +153,7 @@ function MapDrawerComponent({
         </TouchableOpacity>
 
         <View style={styles.drawerFooter}>
-          <Text style={styles.drawerFooterText}>Docks & Bridges Trucker v1.0.0</Text>
+          <Text style={styles.drawerFooterText}>Docks & Bridges Truckers v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
         </View>
       </Animated.View>
     </>

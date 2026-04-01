@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
 import {
   CircleCheck as CheckCircle2,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 import { Hazard } from '@/types';
 import { HazardVerification, CommunityReport } from '@/hooks/useCommunityData';
 
@@ -73,7 +74,7 @@ export default function CommunitySection({
   const [reportDesc, setReportDesc] = useState<string>('');
   const [reportType, setReportType] = useState<CommunityReport['reportType']>('inaccurate');
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   const handleVerify = useCallback((status: HazardVerification['status']) => {
     if (!isAuthenticated || !userId || !userDisplayName) {
