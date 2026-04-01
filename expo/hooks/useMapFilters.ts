@@ -16,7 +16,7 @@ export function useMapFilters(docks: Dock[], hazards: Hazard[]) {
     if (filter === 'docks') return [];
     if (filter === 'bridges') return hazards.filter(h => h.type === 'bridge');
     if (filter === 'wires') return hazards.filter(h => h.type === 'wire');
-    if (filter === 'weight') return hazards.filter(h => h.type === 'weight_limit' || h.weightLimit != null);
+    if (filter === 'weight') return hazards.filter(h => h.type === 'weight_limit');
     return hazards;
   }, [filter, hazards]);
 

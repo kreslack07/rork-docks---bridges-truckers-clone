@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Search, MapPin, AlertTriangle, Inbox, Plus } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
+import { cachedStyles } from '@/utils/styleCache';
 
 type EmptyType = 'search' | 'docks' | 'hazards' | 'favourites' | 'generic';
 
@@ -50,7 +51,7 @@ const EMPTY_DEFAULTS: Record<EmptyType, { defaultTitle: string; defaultMessage: 
 export default function EmptyState({ type = 'generic', title, message, actionLabel, onAction }: EmptyStateProps) {
   const { colors } = useTheme();
   const config = EMPTY_DEFAULTS[type];
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = cachedStyles(makeStyles, colors);
 
   return (
     <View style={styles.container} testID="empty-state">

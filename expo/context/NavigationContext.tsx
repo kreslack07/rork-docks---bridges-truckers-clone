@@ -82,9 +82,9 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
   const [rerouteCount, setRerouteCount] = useState<number>(0);
 
   const navRefs = useRef<NavigationRefsState>({
-    truckHeight: 4.3,
-    truckWeight: 42.5,
-    truckWidth: 2.5,
+    truckHeight: 0,
+    truckWeight: 0,
+    truckWidth: 0,
     destination: null,
     activeAbort: null,
     hasArrived: false,
@@ -177,8 +177,8 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
     if (!liveRoute) return false;
 
     navRefs.current.truckHeight = truckHeight;
-    if (truckWeight) navRefs.current.truckWeight = truckWeight;
-    if (truckWidth) navRefs.current.truckWidth = truckWidth;
+    navRefs.current.truckWeight = truckWeight ?? 0;
+    navRefs.current.truckWidth = truckWidth ?? 0;
     resetClosestIndex();
     const lastCoord = liveRoute.route.coordinates[liveRoute.route.coordinates.length - 1];
     if (lastCoord) {
