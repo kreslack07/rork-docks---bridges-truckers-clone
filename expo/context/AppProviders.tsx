@@ -3,8 +3,10 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { OnboardingProvider } from '@/context/OnboardingContext';
 import { UserPreferencesProvider } from '@/context/UserPreferencesContext';
+import { FavouritesProvider } from '@/context/FavouritesContext';
 import { NotificationsProvider } from '@/context/NotificationsContext';
 import { LiveDataProvider } from '@/context/LiveDataContext';
+import { MapViewportProvider } from '@/context/MapViewportContext';
 import { NavigationProvider } from '@/context/NavigationContext';
 import { ToastProvider } from '@/context/ToastContext';
 
@@ -25,6 +27,8 @@ const ComposedProviders = composeProviders([
   OnboardingProvider,
   NotificationsProvider,
   UserPreferencesProvider,
+  FavouritesProvider,
+  MapViewportProvider,
   LiveDataProvider,
   NavigationProvider,
 ]);

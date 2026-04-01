@@ -12,7 +12,7 @@ import MapView from 'react-native-maps';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
-import { useTruckProfile, useVoice } from '@/context/UserPreferencesContext';
+import { useTruckProfile } from '@/context/UserPreferencesContext';
 import { useLiveData } from '@/context/LiveDataContext';
 import { useNavigation } from '@/context/NavigationContext';
 import { Hazard, RouteCoordinate } from '@/types';
@@ -24,16 +24,8 @@ import {
 import { haversineDistance } from '@/utils/geo';
 import { getHazardColor } from '@/utils/hazards';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
-import {
-  speakInstruction,
-  speakHazardWarning,
-  speakNavigationStart,
-  speakNavigationEnd,
-  speakRerouting,
-  stopSpeaking,
-  resetVoiceState,
-  HazardWarningParams,
-} from '@/services/voice-navigation';
+import { stopSpeaking } from '@/services/voice-navigation';
+import { useVoiceNavigation } from '@/hooks/useVoiceNavigation';
 
 import { useFavourites } from '@/context/UserPreferencesContext';
 import { openInWaze } from '@/services/waze';
@@ -64,16 +56,26 @@ export default function RouteScreen() {
   const [localRouteError, setLocalRouteError] = useState<string | null>(null);
   const { userLocation, getUserLocation: getCurrentLocation, locationError, promptOpenSettings } = useUserLocation();
   const [selectedDestCoord, setSelectedDestCoord] = useState<RouteCoordinate | null>(null);
-  const { isVoiceEnabled: voiceActive, setVoiceEnabled: setVoiceActive } = useVoice();
   const { addRecentRoute } = useFavourites();
+
+  const {
+    voiceActive,
+    resetVoiceRefs,
+    handleNavigationStart: speakNavStart,
+    handleToggleVoice,
+  } = useVoiceNavigation({
+    isNavigating,
+    navProgress,
+    liveRoute,
+    isRerouting,
+    profile,
+  });
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const navMapRef = useRef<MapView>(null);
   const planMapRef = useRef<MapView>(null);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSpokenStepRef = useRef<number>(-1);
-  const lastSpokenHazardRef = useRef<Set<string>>(new Set());
-  const hasSpokenEndRef = useRef<boolean>(false);
   const pendingRecentRouteRef = useRef<{ destination: string; latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
@@ -104,67 +106,6 @@ export default function RouteScreen() {
       );
     }
   }, [isNavigating, livePosition]);
-
-  useEffect(() => {
-    if (!isNavigating || !navProgress || !voiceActive) return;
-
-    if (navProgress.currentStepIndex !== lastSpokenStepRef.current && navProgress.currentStep) {
-      lastSpokenStepRef.current = navProgress.currentStepIndex;
-      speakInstruction(navProgress.currentStep.instruction);
-    }
-
-    if (navProgress.completionPercent >= 98 && !hasSpokenEndRef.current) {
-      hasSpokenEndRef.current = true;
-      speakNavigationEnd();
-    }
-
-    return () => {
-      stopSpeaking();
-    };
-  }, [isNavigating, navProgress, voiceActive]);
-
-  useEffect(() => {
-    if (!isNavigating || !voiceActive || !liveRoute) return;
-
-    for (const hazard of liveRoute.blockedHazards) {
-      if (!lastSpokenHazardRef.current.has(hazard.id)) {
-        lastSpokenHazardRef.current.add(hazard.id);
-        const params: HazardWarningParams = {
-          hazardName: hazard.name,
-          clearanceHeight: hazard.clearanceHeight,
-          truckHeight: profile.height,
-          weightLimit: hazard.weightLimit,
-          truckWeight: profile.weight,
-          widthLimit: hazard.widthLimit,
-          truckWidth: profile.width,
-          hazardType: hazard.type,
-        };
-        speakHazardWarning(params);
-      }
-    }
-    for (const hazard of liveRoute.tightHazards) {
-      if (!lastSpokenHazardRef.current.has(hazard.id)) {
-        lastSpokenHazardRef.current.add(hazard.id);
-        const params: HazardWarningParams = {
-          hazardName: hazard.name,
-          clearanceHeight: hazard.clearanceHeight,
-          truckHeight: profile.height,
-          weightLimit: hazard.weightLimit,
-          truckWeight: profile.weight,
-          widthLimit: hazard.widthLimit,
-          truckWidth: profile.width,
-          hazardType: hazard.type,
-        };
-        speakHazardWarning(params);
-      }
-    }
-  }, [isNavigating, voiceActive, liveRoute, profile.height, profile.weight, profile.width]);
-
-  useEffect(() => {
-    if (isRerouting && voiceActive) {
-      speakRerouting();
-    }
-  }, [isRerouting, voiceActive]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -201,12 +142,6 @@ export default function RouteScreen() {
         abortControllerRef.current = null;
       }
       resetGeocodeRef.current();
-      try {
-        stopSpeaking();
-        resetVoiceState();
-      } catch (error) {
-        console.log('[Route] Cleanup voice error:', error);
-      }
     };
   }, []);
 
@@ -287,18 +222,15 @@ export default function RouteScreen() {
 
   const handleStartNavigation = useCallback(async () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    lastSpokenStepRef.current = -1;
-    lastSpokenHazardRef.current = new Set();
-    hasSpokenEndRef.current = false;
-    resetVoiceState();
+    resetVoiceRefs();
 
     const started = await startNavigation(profile.height, profile.weight, profile.width);
     if (!started) {
       setLocalRouteError('Could not start live tracking. Check location permissions.');
-    } else if (voiceActive) {
-      speakNavigationStart(destination);
+    } else {
+      speakNavStart(destination);
     }
-  }, [startNavigation, profile.height, profile.weight, profile.width, voiceActive, destination]);
+  }, [startNavigation, profile.height, profile.weight, profile.width, destination, resetVoiceRefs, speakNavStart]);
 
   const handleStopNavigation = useCallback(() => {
     Alert.alert(
@@ -387,12 +319,6 @@ export default function RouteScreen() {
   const currentPosition = livePosition
     ? { latitude: livePosition.latitude, longitude: livePosition.longitude }
     : userLocation;
-
-  const handleToggleVoice = useCallback(() => {
-    const next = !voiceActive;
-    setVoiceActive(next);
-    if (!next) stopSpeaking();
-  }, [voiceActive, setVoiceActive]);
 
   const styles = cachedStyles(makeStyles, colors);
 

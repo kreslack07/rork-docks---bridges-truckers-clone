@@ -27,6 +27,7 @@ import { ThemeColors } from '@/constants/colors';
 import { TRUCK_TYPES } from '@/constants/categories';
 import { useTruckProfile } from '@/context/UserPreferencesContext';
 import { useLiveData } from '@/context/LiveDataContext';
+import { useMapViewport } from '@/context/MapViewportContext';
 import { useNavigation } from '@/context/NavigationContext';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useAuth } from '@/context/AuthContext';
@@ -67,10 +68,10 @@ export default function MapScreen() {
     isLoadingDocks,
     isLoadingHazards,
     isOffline,
-    updateMapCenter,
     refetchDocks,
     refetchHazards,
   } = useLiveData();
+  const { updateMapCenter } = useMapViewport();
   const {
     isNavigating,
     livePosition,

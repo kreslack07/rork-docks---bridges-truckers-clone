@@ -1,27 +1,21 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
-import { Dock, Hazard, RouteCoordinate } from '@/types';
+import { Dock, Hazard } from '@/types';
 import { searchDocksNearby } from '@/services/places';
 import { fetchHazardsInArea } from '@/services/hazards-api';
 import { haversineDistance } from '@/utils/geo';
 import { isRateLimited } from '@/services/overpass-throttle';
 import { useToast } from '@/context/ToastContext';
+import { useMapViewport } from '@/context/MapViewportContext';
 import { logger } from '@/utils/logger';
 import { DOCKS as MOCK_DOCKS } from '@/mocks/docks';
 import { HAZARDS as MOCK_HAZARDS } from '@/mocks/hazards';
 import { useNewDataNotifications } from '@/hooks/useNewDataNotifications';
 
+export type { MapRegionBounds } from '@/context/MapViewportContext';
 
-export interface MapRegionBounds {
-  latitude: number;
-  longitude: number;
-  latitudeDelta: number;
-  longitudeDelta: number;
-}
-
-const DEFAULT_LOCATION: RouteCoordinate = { latitude: -33.8688, longitude: 151.2093 };
 const CACHE_DOCKS_KEY = 'cached_docks';
 const CACHE_HAZARDS_KEY = 'cached_hazards';
 
@@ -115,23 +109,13 @@ const MAX_RATE_LIMIT_RETRIES = 5;
 
 export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   const { showToast } = useToast();
+  const { lat, lon, radiusKm } = useMapViewport();
 
   const showToastRef = useRef(showToast);
   showToastRef.current = showToast;
   const queryClient = useQueryClient();
-  const [mapCenter, setMapCenter] = useState<RouteCoordinate>(DEFAULT_LOCATION);
-  const [mapRegion, setMapRegion] = useState<MapRegionBounds>({
-    latitude: DEFAULT_LOCATION.latitude,
-    longitude: DEFAULT_LOCATION.longitude,
-    latitudeDelta: 30,
-    longitudeDelta: 30,
-  });
   const rateLimitRetryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rateLimitRetryCountRef = useRef<number>(0);
-
-  const lat = Math.round(mapCenter.latitude * 50) / 50;
-  const lon = Math.round(mapCenter.longitude * 50) / 50;
-  const radiusKm = Math.max(5, Math.min(80, mapRegion.latitudeDelta * 111 / 2));
 
   const cachedDocksQuery = useQuery({
     queryKey: ['cachedDocks'],
@@ -319,37 +303,6 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     }
   }, [docksError, hazardsError, lat, lon, radiusKm, queryClient]);
 
-  const mapCenterRef = useRef<RouteCoordinate>(DEFAULT_LOCATION);
-  useEffect(() => {
-    mapCenterRef.current = mapCenter;
-  }, [mapCenter]);
-
-  const prevZoomRef = useRef<number>(mapRegion.latitudeDelta);
-
-  const updateMapCenter = useCallback((coord: RouteCoordinate, region?: MapRegionBounds) => {
-    const current = mapCenterRef.current;
-    const latDiff = Math.abs(coord.latitude - current.latitude);
-    const lonDiff = Math.abs(coord.longitude - current.longitude);
-    const panChanged = latDiff + lonDiff > 0.15;
-
-    let zoomChanged = false;
-    if (region) {
-      const zoomRatio = region.latitudeDelta / prevZoomRef.current;
-      zoomChanged = zoomRatio < 0.6 || zoomRatio > 1.5;
-      if (zoomChanged) {
-        prevZoomRef.current = region.latitudeDelta;
-      }
-      if (panChanged || zoomChanged) {
-        setMapRegion(region);
-      }
-    }
-
-    if (panChanged || zoomChanged) {
-      logger.log('[LiveData] Map updated — pan:', panChanged, 'zoom:', zoomChanged);
-      setMapCenter(coord);
-    }
-  }, []);
-
   const docksMap = useMemo(() => {
     const map = new Map<string, Dock>();
     for (const d of allDocks) map.set(d.id, d);
@@ -387,7 +340,6 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     docksError: docksErrorMsg,
     hazardsError: hazardsErrorMsg,
     isOffline,
-    updateMapCenter,
     findDockById,
     findHazardById,
     refetchDocks,
@@ -400,7 +352,6 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     docksErrorMsg,
     hazardsErrorMsg,
     isOffline,
-    updateMapCenter,
     findDockById,
     findHazardById,
     refetchDocks,
