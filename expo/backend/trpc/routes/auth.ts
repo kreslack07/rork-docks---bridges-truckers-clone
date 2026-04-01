@@ -1,5 +1,9 @@
 import * as z from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../create-context";
+import { isSupabaseConfigured } from "../../lib/supabase";
+
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 interface StoredUser {
   id: string;
@@ -16,9 +20,14 @@ interface Session {
   expiresAt: number;
 }
 
-const users: Map<string, StoredUser> = new Map();
-const sessions: Map<string, Session> = new Map();
-const emailIndex: Map<string, string> = new Map();
+const g = globalThis as any;
+if (!g.__AUTH_USERS__) g.__AUTH_USERS__ = new Map<string, StoredUser>();
+if (!g.__AUTH_SESSIONS__) g.__AUTH_SESSIONS__ = new Map<string, Session>();
+if (!g.__AUTH_EMAIL_INDEX__) g.__AUTH_EMAIL_INDEX__ = new Map<string, string>();
+
+const users: Map<string, StoredUser> = g.__AUTH_USERS__;
+const sessions: Map<string, Session> = g.__AUTH_SESSIONS__;
+const emailIndex: Map<string, string> = g.__AUTH_EMAIL_INDEX__;
 
 const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000;
 
@@ -37,21 +46,116 @@ function generateToken(): string {
 }
 
 async function hashPassword(password: string): Promise<string> {
+  const salt = "truckdock_server_salt_v3_sha256";
   const encoder = new TextEncoder();
-  const data = encoder.encode(password + "truckdock_server_salt_v2_secure");
-  let hash = 5381;
-  for (let i = 0; i < data.length; i++) {
-    hash = ((hash << 5) + hash + data[i]) | 0;
-  }
-  const h1 = Math.abs(hash).toString(36);
+  const data = encoder.encode(password + salt);
 
-  let hash2 = 0;
-  for (let i = 0; i < data.length; i++) {
-    hash2 = data[i] + ((hash2 << 6) + (hash2 << 16) - hash2);
+  if (typeof crypto !== "undefined" && crypto.subtle) {
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return "sha$" + hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
   }
-  const h2 = Math.abs(hash2).toString(36);
 
-  return `svr$${h1}$${h2}`;
+  let hash = 0;
+  for (let i = 0; i < data.length; i++) {
+    hash = ((hash << 5) - hash + data[i]) | 0;
+  }
+  let hash2 = 5381;
+  for (let i = 0; i < data.length; i++) {
+    hash2 = ((hash2 << 5) + hash2 + data[i]) | 0;
+  }
+  return `fbk$${Math.abs(hash).toString(36)}$${Math.abs(hash2).toString(36)}`;
+}
+
+async function supabaseFetch(path: string, options: RequestInit = {}): Promise<Response | null> {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  try {
+    return await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      ...options,
+      headers: Object.assign({
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Prefer": "return=representation",
+      }, options.headers ?? {}),
+    });
+  } catch (e) {
+    console.log("[Auth Backend] Supabase fetch error:", e);
+    return null;
+  }
+}
+
+async function persistUserToSupabase(user: StoredUser): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  try {
+    const resp = await supabaseFetch("auth_users", {
+      method: "POST",
+      body: JSON.stringify({
+        id: user.id,
+        email: user.email,
+        display_name: user.displayName,
+        password_hash: user.passwordHash,
+        created_at: new Date(user.createdAt).toISOString(),
+      }),
+      headers: { "Prefer": "return=representation,resolution=merge-duplicates" },
+    });
+    if (resp && resp.ok) {
+      console.log("[Auth Backend] User persisted to Supabase:", user.email);
+    } else {
+      console.log("[Auth Backend] Supabase user persist failed:", resp?.status);
+    }
+  } catch (e) {
+    console.log("[Auth Backend] Supabase persist error:", e);
+  }
+}
+
+async function loadUserFromSupabase(email: string): Promise<StoredUser | null> {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const resp = await supabaseFetch(`auth_users?email=eq.${encodeURIComponent(email)}&limit=1`);
+    if (!resp || !resp.ok) return null;
+    const rows = await resp.json() as Array<{
+      id: string;
+      email: string;
+      display_name: string;
+      password_hash: string;
+      created_at: string;
+    }>;
+    if (rows.length === 0) return null;
+    const row = rows[0];
+    return {
+      id: row.id,
+      email: row.email,
+      displayName: row.display_name,
+      passwordHash: row.password_hash,
+      createdAt: new Date(row.created_at).getTime(),
+    };
+  } catch (e) {
+    console.log("[Auth Backend] Supabase load user error:", e);
+    return null;
+  }
+}
+
+async function deleteUserFromSupabase(userId: string): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  try {
+    await supabaseFetch(`auth_users?id=eq.${encodeURIComponent(userId)}`, { method: "DELETE" });
+    console.log("[Auth Backend] User deleted from Supabase:", userId);
+  } catch (e) {
+    console.log("[Auth Backend] Supabase delete error:", e);
+  }
+}
+
+async function updateUserInSupabase(user: StoredUser): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  try {
+    await supabaseFetch(`auth_users?id=eq.${encodeURIComponent(user.id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ display_name: user.displayName }),
+    });
+  } catch (e) {
+    console.log("[Auth Backend] Supabase update error:", e);
+  }
 }
 
 function createSession(userId: string): Session {
@@ -77,7 +181,9 @@ function cleanExpiredSessions(): void {
   }
 }
 
-setInterval(cleanExpiredSessions, 60 * 60 * 1000);
+if (!g.__AUTH_CLEANUP_TIMER__) {
+  g.__AUTH_CLEANUP_TIMER__ = setInterval(cleanExpiredSessions, 60 * 60 * 1000);
+}
 
 export const authRouter = createTRPCRouter({
   signUp: publicProcedure
@@ -95,6 +201,13 @@ export const authRouter = createTRPCRouter({
         throw new Error("An account with this email already exists.");
       }
 
+      const existingSupaUser = await loadUserFromSupabase(normalizedEmail);
+      if (existingSupaUser) {
+        users.set(existingSupaUser.id, existingSupaUser);
+        emailIndex.set(normalizedEmail, existingSupaUser.id);
+        throw new Error("An account with this email already exists.");
+      }
+
       const passwordHash = await hashPassword(input.password);
       const userId = generateId("usr");
       const now = Date.now();
@@ -109,6 +222,8 @@ export const authRouter = createTRPCRouter({
 
       users.set(userId, user);
       emailIndex.set(normalizedEmail, userId);
+
+      void persistUserToSupabase(user);
 
       const session = createSession(userId);
 
@@ -135,15 +250,21 @@ export const authRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       const normalizedEmail = input.email.toLowerCase().trim();
-      const userId = emailIndex.get(normalizedEmail);
+      let userId = emailIndex.get(normalizedEmail);
+      let user = userId ? users.get(userId) : undefined;
 
-      if (!userId) {
-        throw new Error("No account found with this email.");
+      if (!user) {
+        const supaUser = await loadUserFromSupabase(normalizedEmail);
+        if (supaUser) {
+          users.set(supaUser.id, supaUser);
+          emailIndex.set(normalizedEmail, supaUser.id);
+          user = supaUser;
+          userId = supaUser.id;
+        }
       }
 
-      const user = users.get(userId);
-      if (!user) {
-        throw new Error("Account data not found.");
+      if (!userId || !user) {
+        throw new Error("No account found with this email.");
       }
 
       const passwordHash = await hashPassword(input.password);
@@ -196,7 +317,7 @@ export const authRouter = createTRPCRouter({
     return { success: true };
   }),
 
-  deleteAccount: protectedProcedure.mutation(({ ctx }) => {
+  deleteAccount: protectedProcedure.mutation(async ({ ctx }) => {
     const userId = ctx.userId;
     if (!userId) {
       throw new Error("Not authenticated");
@@ -216,6 +337,8 @@ export const authRouter = createTRPCRouter({
       }
     }
 
+    void deleteUserFromSupabase(userId);
+
     console.log("[Auth Backend] Account deleted:", user.email);
     return { success: true };
   }),
@@ -226,7 +349,7 @@ export const authRouter = createTRPCRouter({
         displayName: z.string().min(1).optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       const userId = ctx.userId;
       if (!userId) {
         throw new Error("Not authenticated");
@@ -242,6 +365,7 @@ export const authRouter = createTRPCRouter({
       }
 
       users.set(userId, user);
+      void updateUserInSupabase(user);
       console.log("[Auth Backend] Profile updated for:", user.email);
 
       return {

@@ -157,9 +157,12 @@ export default function OnboardingScreen() {
     },
   });
 
+  const finishMutateRef = useRef(finishMutation.mutate);
+  finishMutateRef.current = finishMutation.mutate;
+
   const handleFinish = useCallback(() => {
-    finishMutation.mutate();
-  }, [finishMutation]);
+    finishMutateRef.current();
+  }, []);
 
   const handleSkip = useCallback(() => {
     try {
@@ -205,9 +208,10 @@ export default function OnboardingScreen() {
             {step === 0 ? (
               <View style={styles.appIconWrap}>
                 <Image
-                  source={require('@/assets/images/icon.png')}
+                  source={(() => { try { return require('@/assets/images/icon.png'); } catch { return undefined; } })()}
                   style={styles.appIconImage}
                   accessibilityLabel="App icon"
+                  defaultSource={undefined}
                 />
               </View>
             ) : (

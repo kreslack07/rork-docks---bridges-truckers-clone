@@ -321,7 +321,7 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
     let zoomChanged = false;
     if (region) {
       const zoomRatio = region.latitudeDelta / prevZoomRef.current;
-      zoomChanged = zoomRatio < 0.5 || zoomRatio > 2.0;
+      zoomChanged = zoomRatio < 0.7 || zoomRatio > 1.4;
       if (zoomChanged) {
         prevZoomRef.current = region.latitudeDelta;
       }

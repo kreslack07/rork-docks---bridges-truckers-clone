@@ -9,30 +9,29 @@ const OSRM_ENDPOINTS = [
 ];
 const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org/search';
 
-let currentOsrmIndex = 0;
-let lastOsrmFailure = 0;
 const OSRM_COOLDOWN_MS = 30000;
 
-if (__DEV__) {
-  const g = globalThis as any;
-  if (g.__ROUTING_HOT_RESET__) {
-    resetRoutingState();
-  }
-  g.__ROUTING_HOT_RESET__ = true;
-}
+const g = globalThis as Record<string, any>;
+if (g.__ROUTING_OSRM_INDEX__ === undefined) g.__ROUTING_OSRM_INDEX__ = 0;
+if (g.__ROUTING_LAST_FAILURE__ === undefined) g.__ROUTING_LAST_FAILURE__ = 0;
+
+function getOsrmIndex(): number { return g.__ROUTING_OSRM_INDEX__ as number; }
+function setOsrmIndex(v: number) { g.__ROUTING_OSRM_INDEX__ = v; }
+function getLastFailure(): number { return g.__ROUTING_LAST_FAILURE__ as number; }
+function setLastFailure(v: number) { g.__ROUTING_LAST_FAILURE__ = v; }
 
 export function resetRoutingState(): void {
-  currentOsrmIndex = 0;
-  lastOsrmFailure = 0;
+  setOsrmIndex(0);
+  setLastFailure(0);
   logger.log('[Routing] State reset');
 }
 
 function getOsrmEndpoint(): string {
-  if (currentOsrmIndex !== 0 && Date.now() - lastOsrmFailure >= OSRM_COOLDOWN_MS) {
+  if (getOsrmIndex() !== 0 && Date.now() - getLastFailure() >= OSRM_COOLDOWN_MS) {
     logger.log('[Routing] Cooldown expired — recovering to primary endpoint');
-    currentOsrmIndex = 0;
+    setOsrmIndex(0);
   }
-  return OSRM_ENDPOINTS[currentOsrmIndex];
+  return OSRM_ENDPOINTS[getOsrmIndex()];
 }
 
 export interface GeocodedPlace {
@@ -138,10 +137,10 @@ export async function getRoute(
 
     if (!response.ok) {
       logger.log('[Routing] Route fetch failed:', response.status);
-      lastOsrmFailure = Date.now();
+      setLastFailure(Date.now());
 
       if (response.status === 429 || response.status === 503) {
-        currentOsrmIndex = (currentOsrmIndex + 1) % OSRM_ENDPOINTS.length;
+        setOsrmIndex((getOsrmIndex() + 1) % OSRM_ENDPOINTS.length);
         logger.log('[Routing] Switching to fallback OSRM endpoint');
         const fallbackUrl = buildRouteUrl(getOsrmEndpoint(), origin, destination);
         const fallbackResp = await fetch(fallbackUrl, {

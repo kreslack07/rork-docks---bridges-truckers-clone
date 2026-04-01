@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -42,12 +42,13 @@ function ReportHazardScreenContent() {
   const router = useRouter();
   const { colors } = useTheme();
   const { addLocalNotification } = useNotifications();
-  const rateLimit = useRateLimit({
+  const rateLimitConfig = useMemo(() => ({
     key: 'report_hazard',
     maxAttempts: 3,
     windowMs: 10 * 60 * 1000,
     cooldownMs: 5 * 60 * 1000,
-  });
+  }), []);
+  const rateLimit = useRateLimit(rateLimitConfig);
   const [type, setType] = useState<HazardType>('bridge');
   const [name, setName] = useState<string>('');
   const [road, setRoad] = useState<string>('');

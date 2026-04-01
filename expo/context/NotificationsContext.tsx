@@ -216,7 +216,7 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
     setHistoryValue([]);
     mutateClearHistory(undefined, {
       onSuccess: () => {
-        queryClient.setQueryData(['notificationHistory', NOTIF_HISTORY_KEY], []);
+        queryClient.setQueryData(['notificationHistory', NOTIF_HISTORY_KEY], () => []);
       },
     });
   }, [setHistoryValue, mutateClearHistory, queryClient]);
