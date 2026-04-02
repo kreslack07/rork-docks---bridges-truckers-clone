@@ -4,6 +4,7 @@ import { TruckProfile } from '@/types';
 import { usePersistedQuery, usePersistedBoolQuery } from '@/hooks/usePersistedQuery';
 import { logger } from '@/utils/logger';
 import { DEFAULT_COUNTRY_CODE, getCountryByCode, CountryConfig } from '@/constants/countries';
+import { setVoiceLanguage } from '@/services/voice-navigation';
 
 const TRUCK_PROFILE_KEY = 'truck_profile';
 const VOICE_ENABLED_KEY = 'voice_navigation_enabled';
@@ -82,7 +83,9 @@ export const [UserPreferencesProvider, useUserPreferences] = createContextHook((
 
   const setCountryCode = useCallback((code: string) => {
     setCountryCodeValue(code);
-    logger.log('[UserPrefs] Country:', code);
+    const country = getCountryByCode(code);
+    setVoiceLanguage(country.voiceLanguage);
+    logger.log('[UserPrefs] Country:', code, 'voice:', country.voiceLanguage);
   }, [setCountryCodeValue]);
 
   const countryConfig: CountryConfig = useMemo(

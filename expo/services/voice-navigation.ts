@@ -1,6 +1,8 @@
 import { Platform } from 'react-native';
 
 import { logger } from '@/utils/logger';
+import { getCountryByCode, DEFAULT_COUNTRY_CODE } from '@/constants/countries';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const isWeb = Platform.OS === 'web';
 
@@ -11,6 +13,25 @@ if (!isWeb) {
 }
 
 const SPEAKING_SAFETY_TIMEOUT_MS = 30000;
+const COUNTRY_CODE_KEY = 'selected_country_code';
+
+let _cachedVoiceLang: string = getCountryByCode(DEFAULT_COUNTRY_CODE).voiceLanguage;
+
+void AsyncStorage.getItem(COUNTRY_CODE_KEY).then(code => {
+  if (code) {
+    _cachedVoiceLang = getCountryByCode(code).voiceLanguage;
+    logger.log('[Voice] Language set from stored country:', _cachedVoiceLang);
+  }
+}).catch(() => {});
+
+export function setVoiceLanguage(lang: string): void {
+  _cachedVoiceLang = lang;
+  logger.log('[Voice] Language updated:', lang);
+}
+
+function getVoiceLang(): string {
+  return _cachedVoiceLang;
+}
 
 const g = globalThis as Record<string, any>;
 if (g.__VOICE_NAV_STATE__ === undefined) {
@@ -54,7 +75,7 @@ async function processQueue(): Promise<void> {
     try {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-AU';
+        utterance.lang = getVoiceLang();
         utterance.rate = 0.9;
         utterance.onend = () => {
           state.isSpeaking = false;
@@ -82,7 +103,7 @@ async function processQueue(): Promise<void> {
 
   try {
     Speech?.speak(text, {
-      language: 'en-AU',
+      language: getVoiceLang(),
       rate: Platform.OS === 'ios' ? 0.52 : 0.9,
       pitch: 1.0,
       onDone: () => {

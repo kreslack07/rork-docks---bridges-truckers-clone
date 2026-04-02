@@ -32,5 +32,10 @@ export function platformShadow({
     };
   }
 
-  return {};
+  return {
+    shadowColor: color,
+    shadowOffset: { width: offsetX, height: offsetY },
+    shadowOpacity: opacity,
+    shadowRadius: radius,
+  };
 }
