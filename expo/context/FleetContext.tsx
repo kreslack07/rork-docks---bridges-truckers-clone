@@ -42,16 +42,10 @@ export const [FleetProvider, useFleetContext] = createContextHook(() => {
 
     updateTrucks(prev => {
       resolvedColor = TRUCK_COLORS[prev.length % TRUCK_COLORS.length];
-      const newTruck: FleetTruck = {
-        ...truck,
-        id,
-        color: resolvedColor,
-        createdAt: now,
-      };
       if (prev.length === 0) {
         setActiveValue(id);
       }
-      return [...prev, newTruck];
+      return [...prev, { ...truck, id, color: resolvedColor, createdAt: now }];
     });
 
     console.log('[Fleet] Truck added:', id);

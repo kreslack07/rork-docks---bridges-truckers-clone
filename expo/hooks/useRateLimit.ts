@@ -8,6 +8,7 @@ const MAX_KEY_AGE_MS = 24 * 60 * 60 * 1000;
 
 let gcScheduled = false;
 let _gcIntervalId: ReturnType<typeof setInterval> | null = null;
+let _gcRefCount = 0;
 
 async function runGarbageCollection(): Promise<void> {
   try {
@@ -80,7 +81,18 @@ export function useRateLimit(config: RateLimitConfig) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    _gcRefCount++;
     scheduleGC();
+    return () => {
+      _gcRefCount--;
+      if (_gcRefCount <= 0 && _gcIntervalId !== null) {
+        clearInterval(_gcIntervalId);
+        _gcIntervalId = null;
+        gcScheduled = false;
+        _gcRefCount = 0;
+        console.log('[RateLimit] GC interval cleared — no active consumers');
+      }
+    };
   }, []);
 
   const startCooldownTimer = useCallback((endsAt: number) => {

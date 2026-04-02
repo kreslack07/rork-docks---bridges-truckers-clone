@@ -1,6 +1,7 @@
 import { Dock, BusinessCategory } from '@/types';
 import { throttledOverpassFetch } from '@/services/overpass-throttle';
 import { logger } from '@/utils/logger';
+import { APP_COUNTRY_NAME, APP_USER_AGENT } from '@/constants/app';
 
 interface OverpassElement {
   type: string;
@@ -184,9 +185,9 @@ export async function searchDocksNearby(
 export async function searchDocksByQuery(query: string, signal?: AbortSignal): Promise<Dock[]> {
   try {
     logger.log('[Places] Text search:', query);
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ', Australia')}&format=json&limit=5&addressdetails=1`;
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ', ' + APP_COUNTRY_NAME)}&format=json&limit=5&addressdetails=1`;
     const response = await fetch(url, {
-      headers: { 'User-Agent': 'TruckDockFinderAU/1.0' },
+      headers: { 'User-Agent': APP_USER_AGENT },
       signal,
     });
     if (!response.ok) return [];

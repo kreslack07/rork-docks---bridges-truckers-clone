@@ -2,6 +2,7 @@ import { RouteCoordinate, RouteStep, Hazard } from '@/types';
 import { haversineDistance } from '@/utils/geo';
 import { logger } from '@/utils/logger';
 import { classifyHazards } from '@/utils/classify-hazards';
+import { APP_COUNTRY_CODE, APP_USER_AGENT } from '@/constants/app';
 
 const OSRM_ENDPOINTS = [
   'https://router.project-osrm.org/route/v1/driving',
@@ -48,7 +49,7 @@ export interface LiveRouteResult {
   summary: string;
 }
 
-export async function geocodeAddress(query: string, signal?: AbortSignal, countryCode: string = 'au'): Promise<GeocodedPlace[]> {
+export async function geocodeAddress(query: string, signal?: AbortSignal, countryCode: string = APP_COUNTRY_CODE): Promise<GeocodedPlace[]> {
   try {
     const ccParam = countryCode ? `&countrycodes=${countryCode}` : '';
     const url = `${NOMINATIM_BASE}?q=${encodeURIComponent(query)}&format=json${ccParam}&limit=8&addressdetails=1`;
@@ -56,7 +57,7 @@ export async function geocodeAddress(query: string, signal?: AbortSignal, countr
 
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'TruckDockFinderAU/1.0',
+        'User-Agent': APP_USER_AGENT,
       },
       signal,
     });

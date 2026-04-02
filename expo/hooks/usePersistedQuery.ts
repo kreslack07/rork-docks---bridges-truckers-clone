@@ -5,13 +5,25 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 const DEBOUNCE_MS = 300;
 
 const mountVersions = new Map<string, number>();
+const mountRefCounts = new Map<string, number>();
+
 function nextMountVersion(key: string): number {
   const v = (mountVersions.get(key) ?? 0) + 1;
   mountVersions.set(key, v);
+  mountRefCounts.set(key, (mountRefCounts.get(key) ?? 0) + 1);
   return v;
 }
 function getMountVersion(key: string): number {
   return mountVersions.get(key) ?? 0;
+}
+function releaseMountVersion(key: string): void {
+  const count = (mountRefCounts.get(key) ?? 1) - 1;
+  if (count <= 0) {
+    mountVersions.delete(key);
+    mountRefCounts.delete(key);
+  } else {
+    mountRefCounts.set(key, count);
+  }
 }
 
 interface UsePersistedQueryOptions<T> {
@@ -120,6 +132,7 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
           console.log('[usePersistedQuery] Flush serialize error:', e);
         }
       }
+      releaseMountVersion(key);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
