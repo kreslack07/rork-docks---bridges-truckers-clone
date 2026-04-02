@@ -30,7 +30,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
-import { useTruckProfile } from '@/context/UserPreferencesContext';
+import { useTruckProfile, useCountry } from '@/context/UserPreferencesContext';
 import { useFavourites } from '@/context/UserPreferencesContext';
 import { useLiveData } from '@/context/LiveDataContext';
 import { useFleet } from '@/context/UserPreferencesContext';
@@ -47,6 +47,7 @@ export default function ProfileScreen() {
   const { favouriteDockIds, recentRoutes, clearRecentRoutes, favouriteCount } = useFavourites();
   const { docks, isOffline, refetchDocks, refetchHazards } = useLiveData();
   const { truckCount, activeTruck } = useFleet();
+  const { countryConfig } = useCountry();
 
   const favouriteDocks = useMemo(() => {
     const idSet = new Set(favouriteDockIds);
@@ -289,7 +290,7 @@ export default function ProfileScreen() {
               <View style={styles.listItemContent}>
                 <Text style={styles.listItemTitle} numberOfLines={1}>{route.destination}</Text>
                 <Text style={styles.listItemSub}>
-                  {new Date(route.timestamp).toLocaleDateString('en-AU')}
+                  {new Date(route.timestamp).toLocaleDateString(countryConfig.locale)}
                 </Text>
               </View>
             </View>

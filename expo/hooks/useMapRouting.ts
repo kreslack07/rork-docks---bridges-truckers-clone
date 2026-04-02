@@ -6,6 +6,7 @@ import { Dock, Hazard, TruckProfile } from '@/types';
 import { getRoute, analyzeRouteHazards, LiveRouteResult, isRoutingOnCooldown, getCooldownRemainingMs } from '@/services/routing';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useToast } from '@/context/ToastContext';
+import { useCountry } from '@/context/UserPreferencesContext';
 import { logger } from '@/utils/logger';
 
 export function useMapRouting(profile: TruckProfile, hazards: Hazard[], mapRef: React.RefObject<MapView | null>) {
@@ -13,6 +14,7 @@ export function useMapRouting(profile: TruckProfile, hazards: Hazard[], mapRef: 
   const [routeHazards, setRouteHazards] = useState<Hazard[]>([]);
   const { showToast } = useToast();
   const { userLocation, getUserLocation } = useUserLocation();
+  const { countryCode } = useCountry();
   const hazardsRef = useRef(hazards);
   hazardsRef.current = hazards;
 
@@ -30,7 +32,7 @@ export function useMapRouting(profile: TruckProfile, hazards: Hazard[], mapRef: 
         return null;
       }
       const dest = { latitude: dock.latitude, longitude: dock.longitude };
-      const result = await getRoute(origin, dest);
+      const result = await getRoute(origin, dest, undefined, countryCode);
       if (!result) {
         showToast('error', 'Route Failed', 'Could not calculate a route. Try again shortly.');
       }

@@ -1,12 +1,26 @@
 import { Tabs } from "expo-router";
 import { Map, Navigation, AlertTriangle, Truck } from "lucide-react-native";
-import React, { useCallback } from "react";
-import { Platform } from "react-native";
+import React, { useCallback, useRef, useEffect } from "react";
+import { Platform, AppState, AppStateStatus } from "react-native";
 import * as Haptics from 'expo-haptics';
 import { useTheme } from "@/context/ThemeContext";
+import { useNavigation } from "@/context/NavigationContext";
 
 export default function TabLayout() {
   const { colors } = useTheme();
+  const { isNavigating } = useNavigation();
+  const isNavigatingRef = useRef(isNavigating);
+  isNavigatingRef.current = isNavigating;
+
+  useEffect(() => {
+    const handleAppState = (nextState: AppStateStatus) => {
+      if (nextState === 'background' && isNavigatingRef.current) {
+        console.log('[Tabs] App backgrounded while navigating — tracking continues');
+      }
+    };
+    const sub = AppState.addEventListener('change', handleAppState);
+    return () => sub.remove();
+  }, []);
 
   const handleTabPress = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

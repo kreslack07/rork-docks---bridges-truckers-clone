@@ -2,7 +2,7 @@ import { RouteCoordinate, RouteStep, Hazard } from '@/types';
 import { haversineDistance } from '@/utils/geo';
 import { logger } from '@/utils/logger';
 import { classifyHazards } from '@/utils/classify-hazards';
-import { APP_COUNTRY_CODE, APP_USER_AGENT } from '@/constants/app';
+import { APP_COUNTRY_CODE } from '@/constants/app';
 import { getCountryByCode } from '@/constants/countries';
 
 const OSRM_ENDPOINTS = [
@@ -140,14 +140,19 @@ export async function getRoute(
   origin: RouteCoordinate,
   destination: RouteCoordinate,
   signal?: AbortSignal,
+  countryCode?: string,
 ): Promise<LiveRouteResult | null> {
+  const userAgent = countryCode
+    ? getCountryByCode(countryCode).userAgent
+    : getCountryByCode(APP_COUNTRY_CODE).userAgent;
+
   try {
     const endpoint = getOsrmEndpoint();
     const url = buildRouteUrl(endpoint, origin, destination);
-    logger.log('[Routing] Fetching route via', endpoint);
+    logger.log('[Routing] Fetching route via', endpoint, 'country:', countryCode ?? APP_COUNTRY_CODE);
 
     const response = await fetch(url, {
-      headers: { 'User-Agent': APP_USER_AGENT },
+      headers: { 'User-Agent': userAgent },
       signal,
     });
 
@@ -160,7 +165,7 @@ export async function getRoute(
         logger.log('[Routing] Switching to fallback OSRM endpoint');
         const fallbackUrl = buildRouteUrl(getOsrmEndpoint(), origin, destination);
         const fallbackResp = await fetch(fallbackUrl, {
-          headers: { 'User-Agent': APP_USER_AGENT },
+          headers: { 'User-Agent': userAgent },
           signal,
         });
         if (!fallbackResp.ok) return null;

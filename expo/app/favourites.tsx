@@ -136,6 +136,10 @@ function FavouritesScreenContent() {
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        removeClippedSubviews={true}
+        windowSize={5}
         ListEmptyComponent={
           <EmptyState
             type="favourites"

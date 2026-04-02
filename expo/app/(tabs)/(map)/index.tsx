@@ -43,17 +43,11 @@ import MapFloatingActions from '@/components/map/MapFloatingActions';
 import { MapMarkerList } from '@/components/map/MapMarkers';
 import { useMapFilters } from '@/hooks/useMapFilters';
 import { useMapRouting } from '@/hooks/useMapRouting';
+import { useCountry } from '@/context/UserPreferencesContext';
 import { getHazardColor as getHazardColorUtil } from '@/utils/hazards';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
 import { cachedStyles } from '@/utils/styleCache';
 import { platformShadow } from '@/utils/shadows';
-
-const AUSTRALIA_REGION: Region = {
-  latitude: -28.0,
-  longitude: 134.0,
-  latitudeDelta: 30,
-  longitudeDelta: 30,
-};
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
@@ -72,6 +66,9 @@ export default function MapScreen() {
     refetchHazards,
   } = useLiveData();
   const { updateMapCenter } = useMapViewport();
+  const { countryConfig } = useCountry();
+
+  const initialRegion = useMemo<Region>(() => countryConfig.defaultRegion, [countryConfig.defaultRegion]);
   const {
     isNavigating,
     livePosition,
@@ -296,7 +293,7 @@ export default function MapScreen() {
         <MapView
           ref={mapRef}
           style={styles.map}
-          initialRegion={AUSTRALIA_REGION}
+          initialRegion={initialRegion}
           mapType="standard"
           onRegionChangeComplete={handleRegionChange}
           onPress={dismissVehiclePicker}

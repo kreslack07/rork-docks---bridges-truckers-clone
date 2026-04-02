@@ -216,6 +216,10 @@ function SearchScreenContent() {
         contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        removeClippedSubviews={true}
+        windowSize={5}
         ListHeaderComponent={
           <>
             {isLoading && hasQuery && <ListSkeletonLoader count={4} type="search" />}

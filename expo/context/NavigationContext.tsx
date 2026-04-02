@@ -17,6 +17,7 @@ import {
 } from '@/services/live-tracking';
 import { classifyHazards } from '@/utils/classify-hazards';
 import { useToast } from '@/context/ToastContext';
+import { useCountry } from '@/context/UserPreferencesContext';
 import { logger } from '@/utils/logger';
 
 export interface LiveRouteData {
@@ -44,8 +45,9 @@ async function computeLiveRoute(
   truckWeight?: number,
   truckWidth?: number,
   signal?: AbortSignal,
+  countryCode?: string,
 ): Promise<LiveRouteData | null> {
-  const route = await getRoute(origin, destination, signal);
+  const route = await getRoute(origin, destination, signal, countryCode);
   if (!route) return null;
 
   if (signal?.aborted) return null;
@@ -75,6 +77,7 @@ async function computeLiveRoute(
 
 export const [NavigationProvider, useNavigation] = createContextHook(() => {
   const { showToast } = useToast();
+  const { countryCode } = useCountry();
   const [liveRoute, setLiveRoute] = useState<LiveRouteData | null>(null);
   const [isNavigating, setIsNavigating] = useState<boolean>(false);
   const [livePosition, setLivePosition] = useState<LivePosition | null>(null);
@@ -105,7 +108,7 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
       truckWidth?: number;
     }) => {
       logger.log('[Navigation] Rerouting from current position...');
-      return computeLiveRoute(origin, destination, truckHeight, truckWeight, truckWidth, undefined);
+      return computeLiveRoute(origin, destination, truckHeight, truckWeight, truckWidth, undefined, countryCode);
     },
     onSuccess: (data) => {
       if (data) {
@@ -239,7 +242,7 @@ export const [NavigationProvider, useNavigation] = createContextHook(() => {
       navRefs.current.activeAbort = controller;
 
       logger.log('[Navigation] Computing live route...');
-      const result = await computeLiveRoute(origin, destination, truckHeight, truckWeight, truckWidth, controller.signal);
+      const result = await computeLiveRoute(origin, destination, truckHeight, truckWeight, truckWidth, controller.signal, countryCode);
 
       if (controller.signal.aborted) {
         return null;
