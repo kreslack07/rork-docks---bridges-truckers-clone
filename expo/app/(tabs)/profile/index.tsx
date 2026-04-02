@@ -165,7 +165,7 @@ export default function ProfileScreen() {
           accessibilityRole="button"
           onPress={() => Alert.alert(
             'Need Help?',
-            'For support, bug reports, or feedback:\n\nEmail: support@docksandbridges.com.au\n\nYou can also report issues directly in the app using the Report Hazard or Report Dock buttons.',
+            'For support, bug reports, or feedback:\n\nEmail: support@docksandbridges.app\n\nYou can also report issues directly in the app using the Report Hazard or Report Dock buttons.',
             [{ text: 'OK' }],
           )}
           activeOpacity={0.7}

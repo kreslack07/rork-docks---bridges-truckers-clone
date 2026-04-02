@@ -84,7 +84,7 @@ function AuthScreenContent() {
             <Truck size={44} color={colors.primary} />
           </View>
           <Text style={styles.heroTitle}>
-            {mode === 'signin' ? 'Welcome Back' : 'Join TruckDock'}
+            {mode === 'signin' ? 'Welcome Back' : 'Join Docks & Bridges'}
           </Text>
           <Text style={styles.heroSubtitle}>
             {mode === 'signin'
