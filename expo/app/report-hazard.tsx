@@ -33,6 +33,7 @@ if (Platform.OS !== 'web') {
 import { useTheme } from '@/context/ThemeContext';
 import { useRateLimit } from '@/hooks/useRateLimit';
 import { useNotifications } from '@/context/NotificationsContext';
+import { logger } from '@/utils/logger';
 import { ThemeColors } from '@/constants/colors';
 import { cachedStyles } from '@/utils/styleCache';
 
@@ -120,7 +121,7 @@ function ReportHazardScreenContent() {
       );
     },
     onError: (error) => {
-      console.log('[ReportHazard] Submit error:', error);
+      logger.log('[ReportHazard] Submit error:', error);
       Alert.alert('Submission Failed', 'Could not submit your report. Please check your connection and try again.');
     },
   });
@@ -176,7 +177,7 @@ function ReportHazardScreenContent() {
       longitude: parseFloat(lonStr),
       description: description.trim() || undefined,
     };
-    console.log('[ReportHazard] Submitting to backend:', payload);
+    logger.log('[ReportHazard] Submitting to backend:', payload);
     reportMutation.mutate(payload);
   }, [name, road, city, state, type, heightStr, latStr, lonStr, description, rateLimit, reportMutation]);
 

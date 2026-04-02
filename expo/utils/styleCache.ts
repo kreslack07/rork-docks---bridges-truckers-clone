@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { ThemeColors } from '@/constants/colors';
+import { logger } from '@/utils/logger';
 
 type StyleFactory<T> = (colors: ThemeColors) => T;
 
@@ -44,5 +45,5 @@ export function clearStyleCache(): void {
     }
   }
   factoryRefs.length = 0;
-  console.log('[StyleCache] Cache cleared — all theme entries evicted');
+  logger.log('[StyleCache] Cache cleared — all theme entries evicted');
 }

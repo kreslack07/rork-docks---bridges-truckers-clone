@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { ThemeColors, DarkTheme } from '@/constants/colors';
+import { logger } from '@/utils/logger';
 
 interface Props {
   children: ReactNode;
@@ -25,8 +26,8 @@ export default class ScreenErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.log(`[ScreenErrorBoundary:${this.props.screenName ?? 'unknown'}] Caught error:`, error.message);
-    console.log(`[ScreenErrorBoundary:${this.props.screenName ?? 'unknown'}] Component stack:`, errorInfo.componentStack);
+    logger.error(`[ScreenErrorBoundary:${this.props.screenName ?? 'unknown'}] Caught error:`, error.message);
+    logger.error(`[ScreenErrorBoundary:${this.props.screenName ?? 'unknown'}] Component stack:`, errorInfo.componentStack);
   }
 
   handleReset = () => {

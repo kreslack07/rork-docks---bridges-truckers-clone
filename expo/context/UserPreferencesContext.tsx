@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import { TruckProfile } from '@/types';
 import { usePersistedQuery, usePersistedBoolQuery } from '@/hooks/usePersistedQuery';
+import { logger } from '@/utils/logger';
 
 const TRUCK_PROFILE_KEY = 'truck_profile';
 const VOICE_ENABLED_KEY = 'voice_navigation_enabled';
@@ -56,12 +57,12 @@ export const [UserPreferencesProvider, useUserPreferences] = createContextHook((
 
   const setVoiceEnabled = useCallback((enabled: boolean) => {
     setVoiceValue(enabled);
-    console.log('[UserPrefs] Voice navigation:', enabled ? 'enabled' : 'disabled');
+    logger.log('[UserPrefs] Voice navigation:', enabled ? 'enabled' : 'disabled');
   }, [setVoiceValue]);
 
   const setUnitSystem = useCallback((unit: UnitSystem) => {
     setUnitValue(unit);
-    console.log('[UserPrefs] Unit system:', unit);
+    logger.log('[UserPrefs] Unit system:', unit);
   }, [setUnitValue]);
 
   const toggleVoice = useCallback(() => {

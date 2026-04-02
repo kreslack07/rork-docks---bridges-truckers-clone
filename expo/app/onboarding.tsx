@@ -35,6 +35,7 @@ import { TRUCK_TYPES } from '@/constants/categories';
 import { useTruckProfile } from '@/context/UserPreferencesContext';
 import { useOnboarding } from '@/context/OnboardingContext';
 import { TruckProfile } from '@/types';
+import { logger } from '@/utils/logger';
 
 const STEPS = [
   {
@@ -147,7 +148,7 @@ export default function OnboardingScreen() {
       router.replace('/(tabs)/(map)');
     },
     onError: (error) => {
-      console.log('[Onboarding] Finish error:', error);
+      logger.log('[Onboarding] Finish error:', error);
       if (error instanceof Error && error.message === 'INVALID_HEIGHT') {
         Alert.alert('Invalid Height', 'Please enter a height between 1.0m and 10.0m');
       } else {
@@ -169,7 +170,7 @@ export default function OnboardingScreen() {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       router.replace('/(tabs)/(map)');
     } catch (error) {
-      console.log('[Onboarding] Skip error:', error);
+      logger.log('[Onboarding] Skip error:', error);
       Alert.alert('Error', 'Something went wrong. Please try again.');
     }
   }, [completeOnboarding, router]);

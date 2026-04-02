@@ -37,6 +37,7 @@ import { BUSINESS_CATEGORY_LABELS } from '@/constants/categories';
 import { BusinessCategory } from '@/types';
 import { useRateLimit } from '@/hooks/useRateLimit';
 import { useNotifications } from '@/context/NotificationsContext';
+import { logger } from '@/utils/logger';
 
 const DOCK_TYPES = [
   { value: 'loading' as const, label: 'Loading Only' },
@@ -132,7 +133,7 @@ function ReportDockScreenContent() {
       );
     },
     onError: (error) => {
-      console.log('[ReportDock] Submit error:', error);
+      logger.log('[ReportDock] Submit error:', error);
       Alert.alert('Submission Failed', 'Could not submit your report. Please check your connection and try again.');
     },
   });
@@ -190,7 +191,7 @@ function ReportDockScreenContent() {
       latitude: parseFloat(latStr),
       longitude: parseFloat(lonStr),
     };
-    console.log('[ReportDock] Submitting to backend:', payload);
+    logger.log('[ReportDock] Submitting to backend:', payload);
     reportMutation.mutate(payload);
   }, [businessName, dockName, category, dockType, address, city, state, operatingHours, phone, accessNotes, latStr, lonStr, rateLimit, reportMutation]);
 

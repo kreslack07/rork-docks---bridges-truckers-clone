@@ -6,6 +6,7 @@ import { Dock, Hazard, TruckProfile } from '@/types';
 import { getRoute, analyzeRouteHazards, LiveRouteResult, isRoutingOnCooldown, getCooldownRemainingMs } from '@/services/routing';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useToast } from '@/context/ToastContext';
+import { logger } from '@/utils/logger';
 
 export function useMapRouting(profile: TruckProfile, hazards: Hazard[], mapRef: React.RefObject<MapView | null>) {
   const [activeRoute, setActiveRoute] = useState<LiveRouteResult | null>(null);
@@ -55,7 +56,7 @@ export function useMapRouting(profile: TruckProfile, hazards: Hazard[], mapRef: 
       }
     },
     onError: (error) => {
-      console.log('[Map] Route error:', error);
+      logger.log('[Map] Route error:', error);
       showToast('error', 'Route Failed', 'Could not calculate route to dock');
     },
   });

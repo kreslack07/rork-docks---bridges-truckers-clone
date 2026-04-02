@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { DarkTheme, LightTheme, ThemeColors } from '@/constants/colors';
 import { cachedStyles } from '@/utils/styleCache';
+import { logger } from '@/utils/logger';
 
 interface Props {
   children: ReactNode;
@@ -34,8 +35,8 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.log('[ErrorBoundary] Caught error:', error.message);
-    console.log('[ErrorBoundary] Component stack:', errorInfo.componentStack);
+    logger.error('[ErrorBoundary] Caught error:', error.message);
+    logger.error('[ErrorBoundary] Component stack:', errorInfo.componentStack);
   }
 
   handleReset = () => {

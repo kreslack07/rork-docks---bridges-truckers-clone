@@ -75,8 +75,8 @@ export async function geocodeAddress(query: string, signal?: AbortSignal, countr
       latitude: parseFloat(item.lat),
       longitude: parseFloat(item.lon),
     }));
-  } catch (error: any) {
-    if (error?.name === 'AbortError') {
+  } catch (error: unknown) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
       logger.log('[Routing] Geocode aborted');
     } else {
       logger.log('[Routing] Geocode error:', error);
@@ -168,8 +168,8 @@ export async function getRoute(
     }
 
     return parseOsrmResponse(await response.json());
-  } catch (error: any) {
-    if (error?.name === 'AbortError') {
+  } catch (error: unknown) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
       logger.log('[Routing] Route request aborted');
     } else {
       logger.log('[Routing] Route error:', error);

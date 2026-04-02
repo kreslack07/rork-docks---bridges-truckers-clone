@@ -3,6 +3,7 @@ import { useColorScheme } from 'react-native';
 import createContextHook from '@nkzw/create-context-hook';
 import { DarkTheme, LightTheme, ThemeColors } from '@/constants/colors';
 import { usePersistedStringQuery } from '@/hooks/usePersistedQuery';
+import { logger } from '@/utils/logger';
 
 const THEME_KEY = 'app_theme_mode';
 
@@ -28,7 +29,7 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
 
   const setThemeMode = useCallback((newMode: ThemeMode) => {
     setPersistedValue(newMode);
-    console.log('[Theme] Saved mode:', newMode);
+    logger.log('[Theme] Saved mode:', newMode);
   }, [setPersistedValue]);
 
   const isDark = useMemo(() => {

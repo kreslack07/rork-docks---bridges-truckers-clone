@@ -132,16 +132,16 @@ export const [LiveDataProvider, useLiveData] = createContextHook(() => {
   const scheduleRateLimitRetry = useCallback(() => {
     if (rateLimitRetryRef.current) return;
     if (rateLimitRetryCountRef.current >= MAX_RATE_LIMIT_RETRIES) {
-      console.log('[LiveData] Max rate limit retries reached — stopping');
+      logger.log('[LiveData] Max rate limit retries reached — stopping');
       showToastRef.current('warning', 'API Unavailable', 'Data source is temporarily unavailable. Pull to refresh later.');
       return;
     }
     rateLimitRetryCountRef.current += 1;
-    console.log(`[LiveData] Rate limited — scheduling refetch in ${RATE_LIMIT_RETRY_MS / 1000}s (attempt ${rateLimitRetryCountRef.current}/${MAX_RATE_LIMIT_RETRIES})`);
+    logger.log(`[LiveData] Rate limited — scheduling refetch in ${RATE_LIMIT_RETRY_MS / 1000}s (attempt ${rateLimitRetryCountRef.current}/${MAX_RATE_LIMIT_RETRIES})`);
     rateLimitRetryRef.current = setTimeout(() => {
       rateLimitRetryRef.current = null;
       if (!isRateLimited()) {
-        console.log('[LiveData] Rate limit cleared — refetching');
+        logger.log('[LiveData] Rate limit cleared — refetching');
         rateLimitRetryCountRef.current = 0;
         void queryClient.invalidateQueries({ queryKey: ['docks'] });
         void queryClient.invalidateQueries({ queryKey: ['hazards'] });

@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '@/utils/logger';
 
 const RATELIMIT_PREFIX = 'ratelimit_';
 const RATELIMIT_REGISTRY_KEY = 'ratelimit_registry';
@@ -28,12 +29,12 @@ async function runGarbageCollection(): Promise<void> {
 
     if (keysToRemove.length > 0) {
       await AsyncStorage.multiRemove(keysToRemove);
-      console.log('[RateLimit] GC removed', keysToRemove.length, 'expired keys');
+      logger.log('[RateLimit] GC removed', keysToRemove.length, 'expired keys');
     }
 
     await AsyncStorage.setItem(RATELIMIT_REGISTRY_KEY, JSON.stringify(updatedRegistry));
   } catch (e) {
-    console.log('[RateLimit] GC error:', e);
+    logger.log('[RateLimit] GC error:', e);
   }
 }
 
@@ -53,7 +54,7 @@ async function registerKey(key: string): Promise<void> {
     registry[key] = Date.now();
     await AsyncStorage.setItem(RATELIMIT_REGISTRY_KEY, JSON.stringify(registry));
   } catch (e) {
-    console.log('[RateLimit] Registry update error:', e);
+    logger.log('[RateLimit] Registry update error:', e);
   }
 }
 
@@ -90,7 +91,7 @@ export function useRateLimit(config: RateLimitConfig) {
         _gcIntervalId = null;
         gcScheduled = false;
         _gcRefCount = 0;
-        console.log('[RateLimit] GC interval cleared — no active consumers');
+        logger.log('[RateLimit] GC interval cleared — no active consumers');
       }
     };
   }, []);
@@ -133,7 +134,7 @@ export function useRateLimit(config: RateLimitConfig) {
           secondsRemaining: Math.ceil(config.cooldownMs / 1000),
         });
         startCooldownTimer(cooldownEnd);
-        console.log('[RateLimit] Limited:', config.key);
+        logger.log('[RateLimit] Limited:', config.key);
         return false;
       }
 
@@ -149,7 +150,7 @@ export function useRateLimit(config: RateLimitConfig) {
       });
       return true;
     } catch (e) {
-      console.log('[RateLimit] Error:', e);
+      logger.log('[RateLimit] Error:', e);
       return true;
     }
   }, [config, startCooldownTimer]);

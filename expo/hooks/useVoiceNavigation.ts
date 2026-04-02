@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { TruckProfile, Hazard } from '@/types';
+import { logger } from '@/utils/logger';
 import { useVoice } from '@/context/UserPreferencesContext';
 import {
   speakInstruction,
@@ -126,7 +127,7 @@ export function useVoiceNavigation({
         stopSpeaking();
         resetVoiceState();
       } catch (error) {
-        console.log('[VoiceNav] Cleanup voice error:', error);
+        logger.log('[VoiceNav] Cleanup voice error:', error);
       }
     };
   }, []);

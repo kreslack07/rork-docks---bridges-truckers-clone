@@ -32,6 +32,7 @@ import { openInWaze } from '@/services/waze';
 import RouteNavigationView from '@/components/route/RouteNavigationView';
 import RoutePlanningView from '@/components/route/RoutePlanningView';
 import { cachedStyles } from '@/utils/styleCache';
+import { logger } from '@/utils/logger';
 
 export default function RouteScreen() {
   const { colors } = useTheme();
@@ -116,7 +117,7 @@ export default function RouteScreen() {
     },
     onError: (error) => {
       if (!(error instanceof DOMException && error.name === 'AbortError')) {
-        console.log('[Route] Geocoding error:', error);
+        logger.log('[Route] Geocoding error:', error);
       }
     },
   });
@@ -215,7 +216,7 @@ export default function RouteScreen() {
         useNativeDriver: true,
       }).start();
     } catch (error) {
-      console.log('[Route] Route error:', error);
+      logger.log('[Route] Route error:', error);
       setLocalRouteError('Something went wrong. Please try again.');
     }
   }, [selectedDestCoord, getCurrentLocation, locationError, promptOpenSettings, profile.height, profile.weight, profile.width, fadeAnim, computeRoute, clearLiveRoute, destination]);
@@ -309,7 +310,7 @@ export default function RouteScreen() {
 
   useEffect(() => {
     if (contextRouteError && pendingRecentRouteRef.current) {
-      console.log('[Route] Route failed — clearing pending recent route');
+      logger.log('[Route] Route failed — clearing pending recent route');
       pendingRecentRouteRef.current = null;
     }
   }, [contextRouteError]);

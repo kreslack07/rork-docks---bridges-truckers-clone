@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 
 const DEBOUNCE_MS = 300;
 
@@ -63,7 +64,7 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
         try {
           return deserialize(stored) as T;
         } catch {
-          console.log(`[usePersistedQuery] Failed to deserialize key: ${key}`);
+          logger.log(`[usePersistedQuery] Failed to deserialize key: ${key}`);
           return defaultValue;
         }
       }
@@ -120,16 +121,16 @@ export function usePersistedQuery<T>(options: UsePersistedQueryOptions<T>): UseP
           const serialized = currentSerialize(pendingValue);
           void AsyncStorage.setItem(currentKey, serialized).then(() => {
             if (getMountVersion(currentKey) !== capturedVersion) {
-              console.log('[usePersistedQuery] Skipped stale flush for key:', currentKey);
+              logger.log('[usePersistedQuery] Skipped stale flush for key:', currentKey);
             }
           }).catch((e) => {
-            console.log('[usePersistedQuery] Flush on unmount failed:', e);
+            logger.log('[usePersistedQuery] Flush on unmount failed:', e);
           });
           if (getMountVersion(currentKey) === capturedVersion) {
             queryClient.setQueryData(currentFullQueryKey, pendingValue);
           }
         } catch (e) {
-          console.log('[usePersistedQuery] Flush serialize error:', e);
+          logger.log('[usePersistedQuery] Flush serialize error:', e);
         }
       }
       releaseMountVersion(key);

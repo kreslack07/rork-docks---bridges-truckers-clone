@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { Platform, Linking, Alert } from 'react-native';
 import { RouteCoordinate } from '@/types';
+import { logger } from '@/utils/logger';
 
 let Location: typeof import('expo-location') | null = null;
 if (Platform.OS !== 'web') {
@@ -62,7 +63,7 @@ export function useUserLocation() {
                 resolve(loc);
               },
               (err) => {
-                console.log('[useUserLocation] Web geolocation error:', err.code, err.message);
+                logger.log('[useUserLocation] Web geolocation error:', err.code, err.message);
                 if (err.code === 1) {
                   setLocationError('denied');
                 } else if (err.code === 3) {
@@ -75,20 +76,20 @@ export function useUserLocation() {
               { timeout: 15000, maximumAge: 60000 },
             );
           } else {
-            console.log('[useUserLocation] Geolocation API not available on web');
+            logger.log('[useUserLocation] Geolocation API not available on web');
             setLocationError('unavailable');
             resolve(null);
           }
         });
       } else {
         if (!Location) {
-          console.log('[useUserLocation] expo-location not available');
+          logger.log('[useUserLocation] expo-location not available');
           setLocationError('unavailable');
           return null;
         }
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          console.log('[useUserLocation] Location permission denied');
+          logger.log('[useUserLocation] Location permission denied');
           setLocationError('denied');
           return null;
         }
@@ -102,7 +103,7 @@ export function useUserLocation() {
         return coords;
       }
     } catch (error) {
-      console.log('[useUserLocation] Location error:', error);
+      logger.log('[useUserLocation] Location error:', error);
       setLocationError('unavailable');
       return null;
     }

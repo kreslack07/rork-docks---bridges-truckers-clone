@@ -22,6 +22,7 @@ import { ThemeColors } from '@/constants/colors';
 import { TRUCK_TYPES } from '@/constants/categories';
 import { TruckProfile } from '@/types';
 import { cachedStyles } from '@/utils/styleCache';
+import { logger } from '@/utils/logger';
 
 interface TruckFormProps {
   colors: ThemeColors;
@@ -72,7 +73,7 @@ function TruckForm({ colors, profile, onSave }: TruckFormProps) {
         !isNaN(weight) && weight >= 0.5 && weight <= 200 &&
         !isNaN(width) && width >= 1 && width <= 5
       ) {
-        console.log('[TruckForm] Auto-saving on unmount');
+        logger.log('[TruckForm] Auto-saving on unmount');
         onSaveRef.current({
           name: s.name,
           height,

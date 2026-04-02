@@ -1,4 +1,5 @@
 import { Platform, Linking, Alert } from 'react-native';
+import { logger } from '@/utils/logger';
 
 const WAZE_DEEPLINK_BASE = 'https://waze.com/ul';
 
@@ -19,7 +20,7 @@ export function buildWazeUrl(params: WazeNavigationParams): string {
 
 export async function openInWaze(params: WazeNavigationParams): Promise<boolean> {
   const url = buildWazeUrl(params);
-  console.log('[Waze] Opening:', url);
+  logger.log('[Waze] Opening:', url);
 
   try {
     if (Platform.OS === 'web') {
@@ -32,15 +33,15 @@ export async function openInWaze(params: WazeNavigationParams): Promise<boolean>
 
     if (canOpenWaze) {
       await Linking.openURL(wazeAppUrl);
-      console.log('[Waze] Opened native app');
+      logger.log('[Waze] Opened native app');
       return true;
     }
 
     await Linking.openURL(url);
-    console.log('[Waze] Opened web fallback');
+    logger.log('[Waze] Opened web fallback');
     return true;
   } catch (error) {
-    console.log('[Waze] Open error:', error);
+    logger.error('[Waze] Open error:', error);
     Alert.alert(
       'Cannot Open Waze',
       'Waze could not be opened. Make sure Waze is installed or try opening it manually.',

@@ -4,6 +4,7 @@ import superjson from "superjson";
 import * as SecureStore from 'expo-secure-store';
 
 import type { AppRouter } from "@/backend/trpc/app-router";
+import { logger } from '@/utils/logger';
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -12,7 +13,7 @@ export const AUTH_TOKEN_KEY = "auth_session_token";
 const getBaseUrl = () => {
   const url = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   if (!url) {
-    console.warn('[tRPC] EXPO_PUBLIC_RORK_API_BASE_URL is not set — backend calls will fail silently');
+    logger.warn('[tRPC] EXPO_PUBLIC_RORK_API_BASE_URL is not set — backend calls will fail silently');
   }
   return url ?? '';
 };

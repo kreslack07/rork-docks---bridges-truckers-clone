@@ -8,7 +8,7 @@ export function useMapFilters(docks: Dock[], hazards: Hazard[]) {
   const [filter, setFilter] = useState<MapFilter>('all');
 
   const filteredDocks = useMemo(() => {
-    if (filter === 'bridges' || filter === 'wires') return [];
+    if (filter === 'bridges' || filter === 'wires' || filter === 'weight') return [];
     return docks;
   }, [filter, docks]);
 

@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useMutation } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
 import { trpcClient, setAuthToken, loadAuthToken, isBackendConfigured } from '@/lib/trpc';
+import { logger } from '@/utils/logger';
 
 const AUTH_USER_KEY = 'auth_user_cache';
 
@@ -21,7 +22,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const validateSessionMutation = useMutation({
     mutationFn: async () => {
       if (!isBackendConfigured()) {
-        console.log('[Auth] Backend not configured — skipping session validation');
+        logger.log('[Auth] Backend not configured — skipping session validation');
         return null;
       }
       return await trpcClient.auth.getMe.query();
@@ -30,11 +31,11 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       if (freshUser) {
         setUser(freshUser);
         await SecureStore.setItemAsync(AUTH_USER_KEY, JSON.stringify(freshUser));
-        console.log('[Auth] Validated session with backend:', freshUser.email);
+        logger.log('[Auth] Validated session with backend:', freshUser.email);
       }
     },
     onError: async () => {
-      console.log('[Auth] Session expired or invalid, clearing');
+      logger.log('[Auth] Session expired or invalid, clearing');
       setAuthToken(null);
       await SecureStore.deleteItemAsync(AUTH_USER_KEY);
       setUser(null);
@@ -56,16 +57,16 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           if (cachedUser) {
             const parsed = JSON.parse(cachedUser) as AuthUser;
             setUser(parsed);
-            console.log('[Auth] Restored cached user:', parsed.email);
+            logger.log('[Auth] Restored cached user:', parsed.email);
           }
 
           setIsValidating(true);
           validateRef.current.mutate();
         } else {
-          console.log('[Auth] No stored token found');
+          logger.log('[Auth] No stored token found');
         }
       } catch (err) {
-        console.log('[Auth] Error loading auth state:', err);
+        logger.log('[Auth] Error loading auth state:', err);
       } finally {
         setIsLoaded(true);
       }
@@ -80,7 +81,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       const result = await trpcClient.auth.signUp.mutate({ email, password, displayName });
       setAuthToken(result.token);
       await SecureStore.setItemAsync(AUTH_USER_KEY, JSON.stringify(result.user));
-      console.log('[Auth] Signed up via backend:', result.user.email);
+      logger.log('[Auth] Signed up via backend:', result.user.email);
       return result.user;
     },
     onSuccess: (data) => setUser(data),
@@ -94,7 +95,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       const result = await trpcClient.auth.signIn.mutate({ email, password });
       setAuthToken(result.token);
       await SecureStore.setItemAsync(AUTH_USER_KEY, JSON.stringify(result.user));
-      console.log('[Auth] Signed in via backend:', result.user.email);
+      logger.log('[Auth] Signed in via backend:', result.user.email);
       return result.user;
     },
     onSuccess: (data) => setUser(data),
@@ -106,12 +107,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         try {
           await trpcClient.auth.signOut.mutate();
         } catch {
-          console.log('[Auth] Backend signout failed, clearing locally');
+          logger.log('[Auth] Backend signout failed, clearing locally');
         }
       }
       setAuthToken(null);
       await SecureStore.deleteItemAsync(AUTH_USER_KEY);
-      console.log('[Auth] Signed out');
+      logger.log('[Auth] Signed out');
     },
     onSuccess: () => setUser(null),
   });
@@ -124,7 +125,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       await trpcClient.auth.deleteAccount.mutate();
       setAuthToken(null);
       await SecureStore.deleteItemAsync(AUTH_USER_KEY);
-      console.log('[Auth] Account deleted');
+      logger.log('[Auth] Account deleted');
     },
     onSuccess: () => setUser(null),
   });

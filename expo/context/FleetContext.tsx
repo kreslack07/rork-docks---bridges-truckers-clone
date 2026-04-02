@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import { TruckProfile } from '@/types';
 import { usePersistedQuery, usePersistedStringQuery } from '@/hooks/usePersistedQuery';
+import { logger } from '@/utils/logger';
 
 const FLEET_KEY = 'fleet_trucks';
 const ACTIVE_TRUCK_KEY = 'fleet_active_truck';
@@ -48,7 +49,7 @@ export const [FleetProvider, useFleetContext] = createContextHook(() => {
       return [...prev, { ...truck, id, color: resolvedColor, createdAt: now }];
     });
 
-    console.log('[Fleet] Truck added:', id);
+    logger.log('[Fleet] Truck added:', id);
     return {
       ...truck,
       id,
@@ -61,7 +62,7 @@ export const [FleetProvider, useFleetContext] = createContextHook(() => {
     updateTrucks(prev => {
       return prev.map(t => t.id === id ? { ...t, ...updates } : t);
     });
-    console.log('[Fleet] Truck updated:', id);
+    logger.log('[Fleet] Truck updated:', id);
   }, [updateTrucks]);
 
   const removeTruck = useCallback((id: string) => {
@@ -73,12 +74,12 @@ export const [FleetProvider, useFleetContext] = createContextHook(() => {
       }
       return updated;
     });
-    console.log('[Fleet] Truck removed:', id);
+    logger.log('[Fleet] Truck removed:', id);
   }, [updateTrucks, activeValue, setActiveValue]);
 
   const setActiveTruck = useCallback((id: string) => {
     setActiveValue(id);
-    console.log('[Fleet] Active truck set:', id);
+    logger.log('[Fleet] Active truck set:', id);
   }, [setActiveValue]);
 
   const activeTruck = useMemo(

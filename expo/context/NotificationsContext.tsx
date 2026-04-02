@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import createContextHook from '@nkzw/create-context-hook';
 import { usePersistedQuery } from '@/hooks/usePersistedQuery';
+import { logger } from '@/utils/logger';
 
 const NOTIF_PREFS_KEY = 'notification_prefs';
 const NOTIF_HISTORY_KEY = 'notification_history';
@@ -31,7 +32,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
 
 async function registerForPushNotifications(): Promise<string | null> {
   if (Platform.OS === 'web') {
-    console.log('[Notifications] Web — push not supported');
+    logger.log('[Notifications] Web — push not supported');
     return null;
   }
 
@@ -47,7 +48,7 @@ async function registerForPushNotifications(): Promise<string | null> {
     }
 
     if (finalStatus !== 'granted') {
-      console.log('[Notifications] Permission not granted');
+      logger.log('[Notifications] Permission not granted');
       return null;
     }
 
@@ -61,16 +62,16 @@ async function registerForPushNotifications(): Promise<string | null> {
 
     const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.expoConfig?.slug;
     if (!projectId) {
-      console.log('[Notifications] No project ID found — push tokens unavailable');
+      logger.log('[Notifications] No project ID found — push tokens unavailable');
       return null;
     }
     const tokenData = await Notifications.getExpoPushTokenAsync({
       projectId,
     });
-    console.log('[Notifications] Token:', tokenData.data);
+    logger.log('[Notifications] Token:', tokenData.data);
     return tokenData.data;
   } catch (e) {
-    console.log('[Notifications] Registration error:', e);
+    logger.log('[Notifications] Registration error:', e);
     return null;
   }
 }
@@ -141,7 +142,7 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
         });
         notifSubRef.current = sub;
       } catch (e) {
-        console.log('[Notifications] Listener error:', e);
+        logger.log('[Notifications] Listener error:', e);
       }
     })();
 
@@ -183,7 +184,7 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
             },
           });
         } catch (e) {
-          console.log('[Notifications] Schedule error:', e);
+          logger.log('[Notifications] Schedule error:', e);
         }
       })();
     }

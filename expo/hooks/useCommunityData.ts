@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { usePersistedQuery } from '@/hooks/usePersistedQuery';
+import { logger } from '@/utils/logger';
 
 export interface HazardVerification {
   id: string;
@@ -62,7 +63,7 @@ export function useCommunityData() {
       timestamp: Date.now(),
     };
     updateVerifications(prev => [newVerification, ...prev].slice(0, 200));
-    console.log('[Community] Verification added:', newVerification.id, status);
+    logger.log('[Community] Verification added:', newVerification.id, status);
     return newVerification;
   }, [updateVerifications]);
 
@@ -85,7 +86,7 @@ export function useCommunityData() {
       upvotedBy: [],
     };
     updateReports(prev => [newReport, ...prev].slice(0, 200));
-    console.log('[Community] Report added:', newReport.id, reportType);
+    logger.log('[Community] Report added:', newReport.id, reportType);
     return newReport;
   }, [updateReports]);
 

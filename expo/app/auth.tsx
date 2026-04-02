@@ -64,8 +64,9 @@ function AuthScreenContent() {
       }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Something went wrong.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Something went wrong.';
+      Alert.alert('Error', message);
     }
   }, [email, password, displayName, mode, signIn, signUp, validateEmail, router]);
 
