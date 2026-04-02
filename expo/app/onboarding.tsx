@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -32,52 +32,56 @@ import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import { cachedStyles } from '@/utils/styleCache';
 import { TRUCK_TYPES } from '@/constants/categories';
-import { useTruckProfile } from '@/context/UserPreferencesContext';
+import { useTruckProfile, useCountry } from '@/context/UserPreferencesContext';
 import { useOnboarding } from '@/context/OnboardingContext';
 import { TruckProfile } from '@/types';
 import { logger } from '@/utils/logger';
 
-const STEPS = [
-  {
-    icon: Truck,
-    title: 'Welcome, Driver',
-    subtitle: 'Australia\'s smartest dock finder & route planner for trucks and delivery vehicles.',
-    highlight: 'Find any dock. Avoid every hazard.',
-    features: [
-      { icon: MapPin, text: 'Thousands of business docks across Australia', color: 'primary' },
-      { icon: AlertTriangle, text: 'Live clearance data updated daily', color: 'warning' },
-      { icon: Shield, text: 'Community-verified hazard reports', color: 'success' },
-    ],
-  },
-  {
-    icon: AlertTriangle,
-    title: 'Real-Time Hazards',
-    subtitle: 'Live data on low bridges, low-hanging wires, and clearance restrictions across Australia.',
-    highlight: 'Never hit a bridge again.',
-    features: [
-      { icon: AlertTriangle, text: 'Low bridge & overpass alerts', color: 'danger' },
-      { icon: Ruler, text: 'Exact clearance heights from OpenStreetMap', color: 'warning' },
-      { icon: MapPin, text: 'Low-hanging wire detection along routes', color: 'primary' },
-    ],
-  },
-  {
-    icon: Navigation,
-    title: 'Smart Routing',
-    subtitle: 'Get turn-by-turn directions that avoid hazards based on your truck\'s height.',
-    highlight: 'Routes built for your truck.',
-    features: [
-      { icon: Truck, text: 'Routes customised to your truck height', color: 'primary' },
-      { icon: Navigation, text: 'Turn-by-turn voice navigation', color: 'success' },
-      { icon: Shield, text: 'Automatic rerouting around hazards', color: 'warning' },
-    ],
-  },
-];
+function buildSteps(countryName: string) {
+  return [
+    {
+      icon: Truck,
+      title: 'Welcome, Driver',
+      subtitle: `The smartest dock finder & route planner for trucks and delivery vehicles in ${countryName}.`,
+      highlight: 'Find any dock. Avoid every hazard.',
+      features: [
+        { icon: MapPin, text: `Thousands of business docks across ${countryName}`, color: 'primary' },
+        { icon: AlertTriangle, text: 'Live clearance data updated daily', color: 'warning' },
+        { icon: Shield, text: 'Community-verified hazard reports', color: 'success' },
+      ],
+    },
+    {
+      icon: AlertTriangle,
+      title: 'Real-Time Hazards',
+      subtitle: `Live data on low bridges, low-hanging wires, and clearance restrictions across ${countryName}.`,
+      highlight: 'Never hit a bridge again.',
+      features: [
+        { icon: AlertTriangle, text: 'Low bridge & overpass alerts', color: 'danger' },
+        { icon: Ruler, text: 'Exact clearance heights from OpenStreetMap', color: 'warning' },
+        { icon: MapPin, text: 'Low-hanging wire detection along routes', color: 'primary' },
+      ],
+    },
+    {
+      icon: Navigation,
+      title: 'Smart Routing',
+      subtitle: 'Get turn-by-turn directions that avoid hazards based on your truck\'s height.',
+      highlight: 'Routes built for your truck.',
+      features: [
+        { icon: Truck, text: 'Routes customised to your truck height', color: 'primary' },
+        { icon: Navigation, text: 'Turn-by-turn voice navigation', color: 'success' },
+        { icon: Shield, text: 'Automatic rerouting around hazards', color: 'warning' },
+      ],
+    },
+  ];
+}
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { colors } = useTheme();
   const { updateProfile } = useTruckProfile();
+  const { countryConfig } = useCountry();
+  const steps = useMemo(() => buildSteps(countryConfig.name), [countryConfig.name]);
   const { completeOnboarding } = useOnboarding();
   const [step, setStep] = useState<number>(0);
   const [selectedType, setSelectedType] = useState<TruckProfile['type']>('semi_trailer');
@@ -88,7 +92,7 @@ export default function OnboardingScreen() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  const isSetupStep = step >= STEPS.length;
+  const isSetupStep = step >= steps.length;
 
   const animateTransition = useCallback((nextStep: number) => {
     Animated.parallel([
@@ -106,10 +110,10 @@ export default function OnboardingScreen() {
 
   const handleNext = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (step < STEPS.length) {
+    if (step < steps.length) {
       animateTransition(step + 1);
     }
-  }, [step, animateTransition]);
+  }, [step, animateTransition, steps.length]);
 
   const handleSelectType = useCallback((type: TruckProfile['type']) => {
     setSelectedType(type);
@@ -175,7 +179,7 @@ export default function OnboardingScreen() {
     }
   }, [completeOnboarding, router]);
 
-  const totalSteps = STEPS.length + 1;
+  const totalSteps = steps.length + 1;
   const styles = cachedStyles(makeStyles, colors);
 
   return (
@@ -213,21 +217,21 @@ export default function OnboardingScreen() {
               </View>
             ) : (
               <View style={styles.iconCircle}>
-                {React.createElement(STEPS[step].icon, {
+                {React.createElement(steps[step].icon, {
                   size: 48,
                   color: colors.primary,
                 })}
               </View>
             )}
-            <Text style={styles.stepTitle}>{STEPS[step].title}</Text>
-            <Text style={styles.stepSubtitle}>{STEPS[step].subtitle}</Text>
+            <Text style={styles.stepTitle}>{steps[step].title}</Text>
+            <Text style={styles.stepSubtitle}>{steps[step].subtitle}</Text>
             <View style={styles.highlightBadge}>
               <Shield size={14} color={colors.primary} />
-              <Text style={styles.highlightText}>{STEPS[step].highlight}</Text>
+              <Text style={styles.highlightText}>{steps[step].highlight}</Text>
             </View>
 
             <View style={styles.featureList}>
-              {STEPS[step].features.map((feat, idx) => {
+              {steps[step].features.map((feat: any, idx: number) => {
                 const FeatureIcon = feat.icon;
                 const featureColor = feat.color === 'primary' ? colors.primary
                   : feat.color === 'warning' ? colors.warning

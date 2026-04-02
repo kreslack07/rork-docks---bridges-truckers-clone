@@ -3,10 +3,12 @@ import createContextHook from '@nkzw/create-context-hook';
 import { TruckProfile } from '@/types';
 import { usePersistedQuery, usePersistedBoolQuery } from '@/hooks/usePersistedQuery';
 import { logger } from '@/utils/logger';
+import { DEFAULT_COUNTRY_CODE, getCountryByCode, CountryConfig } from '@/constants/countries';
 
 const TRUCK_PROFILE_KEY = 'truck_profile';
 const VOICE_ENABLED_KEY = 'voice_navigation_enabled';
 const UNIT_PREFERENCE_KEY = 'unit_preference';
+const COUNTRY_CODE_KEY = 'selected_country_code';
 
 export type UnitSystem = 'metric' | 'imperial';
 
@@ -43,9 +45,18 @@ export const [UserPreferencesProvider, useUserPreferences] = createContextHook((
     deserialize: (v) => v as UnitSystem,
   });
 
+  const countryPersisted = usePersistedQuery<string>({
+    key: COUNTRY_CODE_KEY,
+    queryKey: ['countryPreference'],
+    defaultValue: DEFAULT_COUNTRY_CODE,
+    serialize: (v) => v,
+    deserialize: (v) => v,
+  });
+
   const { updateValue: updateProfileValue } = profilePersisted;
   const { setValue: setVoiceValue } = voicePersisted;
   const { setValue: setUnitValue } = unitPersisted;
+  const { setValue: setCountryCodeValue } = countryPersisted;
 
   const updateProfile = useCallback((updates: Partial<TruckProfile>) => {
     updateProfileValue(prev => ({ ...prev, ...updates }));
@@ -69,6 +80,16 @@ export const [UserPreferencesProvider, useUserPreferences] = createContextHook((
     setVoiceEnabled(!voicePersisted.value);
   }, [voicePersisted.value, setVoiceEnabled]);
 
+  const setCountryCode = useCallback((code: string) => {
+    setCountryCodeValue(code);
+    logger.log('[UserPrefs] Country:', code);
+  }, [setCountryCodeValue]);
+
+  const countryConfig: CountryConfig = useMemo(
+    () => getCountryByCode(countryPersisted.value),
+    [countryPersisted.value],
+  );
+
   return useMemo(() => ({
     profile: profilePersisted.value,
     updateProfile,
@@ -80,6 +101,9 @@ export const [UserPreferencesProvider, useUserPreferences] = createContextHook((
     toggleVoice,
     unitSystem: unitPersisted.value,
     setUnitSystem,
+    countryCode: countryPersisted.value,
+    setCountryCode,
+    countryConfig,
   }), [
     profilePersisted.value,
     updateProfile,
@@ -90,6 +114,9 @@ export const [UserPreferencesProvider, useUserPreferences] = createContextHook((
     toggleVoice,
     unitPersisted.value,
     setUnitSystem,
+    countryPersisted.value,
+    setCountryCode,
+    countryConfig,
   ]);
 });
 
@@ -134,6 +161,11 @@ export function useUnits() {
   return useMemo(() => ({
     unitSystem, setUnitSystem, isMetric, formatHeight, formatWeight, formatDistance, heightUnit, weightUnit, distanceUnit,
   }), [unitSystem, setUnitSystem, isMetric, formatHeight, formatWeight, formatDistance, heightUnit, weightUnit, distanceUnit]);
+}
+
+export function useCountry() {
+  const { countryCode, setCountryCode, countryConfig } = useUserPreferences();
+  return { countryCode, setCountryCode, countryConfig };
 }
 
 export { useFleet } from '@/context/FleetContext';

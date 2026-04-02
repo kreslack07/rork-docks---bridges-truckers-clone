@@ -17,13 +17,15 @@ import {
   LogOut,
   User,
   Info,
+  Globe,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme, ThemeMode } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@/context/NotificationsContext';
-import { useVoice, useUnits } from '@/context/UserPreferencesContext';
+import { useVoice, useUnits, useCountry } from '@/context/UserPreferencesContext';
+import { SUPPORTED_COUNTRIES } from '@/constants/countries';
 import Constants from 'expo-constants';
 import AppearanceSection from '@/components/profile/AppearanceSection';
 import VoiceSection from '@/components/profile/VoiceSection';
@@ -37,6 +39,7 @@ export default function SettingsScreen() {
   const { unreadCount, prefs, updatePrefs } = useNotifications();
   const { isVoiceEnabled: voiceOn, setVoiceEnabled: setVoiceOnCtx } = useVoice();
   const { unitSystem, setUnitSystem } = useUnits();
+  const { countryCode, setCountryCode } = useCountry();
 
   const handleToggleVoice = useCallback(() => {
     const newVal = !voiceOn;
@@ -142,6 +145,39 @@ export default function SettingsScreen() {
         unreadCount={unreadCount}
         onUpdatePrefs={updatePrefs}
       />
+
+      <View style={styles.unitCard}>
+        <View style={styles.countryHeader}>
+          <Globe size={16} color={colors.primary} />
+          <Text style={styles.unitCardTitle}>Region</Text>
+        </View>
+        <Text style={styles.unitCardDesc}>Set your country for search and data</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.countryScrollRow}
+          contentContainerStyle={styles.countryScrollContent}
+        >
+          {SUPPORTED_COUNTRIES.map((c) => (
+            <TouchableOpacity
+              key={c.code}
+              style={[styles.countryChip, countryCode === c.code && styles.countryChipActive]}
+              onPress={() => {
+                setCountryCode(c.code);
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }}
+              activeOpacity={0.7}
+              accessibilityLabel={`Select ${c.name}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: countryCode === c.code }}
+            >
+              <Text style={[styles.countryChipText, countryCode === c.code && styles.countryChipTextActive]}>
+                {c.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
       <View style={styles.unitCard}>
         <Text style={styles.unitCardTitle}>Units</Text>
@@ -437,6 +473,39 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     fontWeight: '600' as const,
   },
   unitToggleTextActive: {
+    color: colors.primary,
+  },
+  countryHeader: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+    marginBottom: 2,
+  },
+  countryScrollRow: {
+    marginHorizontal: -16,
+  },
+  countryScrollContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  countryChip: {
+    backgroundColor: colors.elevated,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  countryChipActive: {
+    backgroundColor: colors.primary + '15',
+    borderColor: colors.primary,
+  },
+  countryChipText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600' as const,
+  },
+  countryChipTextActive: {
     color: colors.primary,
   },
   versionText: {

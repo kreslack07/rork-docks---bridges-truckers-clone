@@ -182,12 +182,17 @@ export async function searchDocksNearby(
   }
 }
 
-export async function searchDocksByQuery(query: string, signal?: AbortSignal): Promise<Dock[]> {
+export async function searchDocksByQuery(
+  query: string,
+  signal?: AbortSignal,
+  countryName: string = APP_COUNTRY_NAME,
+  userAgent: string = APP_USER_AGENT,
+): Promise<Dock[]> {
   try {
-    logger.log('[Places] Text search:', query);
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ', ' + APP_COUNTRY_NAME)}&format=json&limit=5&addressdetails=1`;
+    logger.log('[Places] Text search:', query, 'country:', countryName);
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ', ' + countryName)}&format=json&limit=5&addressdetails=1`;
     const response = await fetch(url, {
-      headers: { 'User-Agent': APP_USER_AGENT },
+      headers: { 'User-Agent': userAgent },
       signal,
     });
     if (!response.ok) return [];

@@ -4,9 +4,11 @@ import { Stack } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import { cachedStyles } from '@/utils/styleCache';
+import { useCountry } from '@/context/UserPreferencesContext';
 
 export default function TermsOfServiceScreen() {
   const { colors } = useTheme();
+  const { countryConfig } = useCountry();
   const styles = cachedStyles(makeStyles, colors);
 
   return (
@@ -26,7 +28,7 @@ export default function TermsOfServiceScreen() {
 
         <Text style={styles.heading}>2. Description of Service</Text>
         <Text style={styles.body}>
-          This app provides truck and delivery vehicle drivers with route planning, dock finding, and height hazard awareness tools for driving in Australia. The app uses publicly available data sources and user-contributed reports.
+          This app provides truck and delivery vehicle drivers with route planning, dock finding, and height hazard awareness tools. The app uses publicly available data sources and user-contributed reports.
         </Text>
 
         <Text style={styles.heading}>3. Disclaimer of Accuracy</Text>
@@ -93,7 +95,7 @@ export default function TermsOfServiceScreen() {
 
         <Text style={styles.heading}>10. Governing Law</Text>
         <Text style={styles.body}>
-          These terms are governed by the laws of Australia. Any disputes arising from the use of this app shall be subject to the jurisdiction of Australian courts.
+          These terms are governed by the laws of {countryConfig.name}. Any disputes arising from the use of this app shall be subject to the jurisdiction of {countryConfig.demonym} courts.
         </Text>
 
         <Text style={styles.heading}>11. Changes to Terms</Text>

@@ -12,7 +12,7 @@ import MapView from 'react-native-maps';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
-import { useTruckProfile } from '@/context/UserPreferencesContext';
+import { useTruckProfile, useCountry } from '@/context/UserPreferencesContext';
 import { useLiveData } from '@/context/LiveDataContext';
 import { useNavigation } from '@/context/NavigationContext';
 import { Hazard, RouteCoordinate } from '@/types';
@@ -110,9 +110,11 @@ export default function RouteScreen() {
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const { countryCode } = useCountry();
+
   const geocodeMutation = useMutation({
     mutationFn: async ({ text, signal }: { text: string; signal: AbortSignal }) => {
-      const results = await geocodeAddress(text, signal);
+      const results = await geocodeAddress(text, signal, countryCode);
       return results;
     },
     onError: (error) => {

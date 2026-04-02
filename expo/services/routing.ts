@@ -3,6 +3,7 @@ import { haversineDistance } from '@/utils/geo';
 import { logger } from '@/utils/logger';
 import { classifyHazards } from '@/utils/classify-hazards';
 import { APP_COUNTRY_CODE, APP_USER_AGENT } from '@/constants/app';
+import { getCountryByCode } from '@/constants/countries';
 
 const OSRM_ENDPOINTS = [
   'https://router.project-osrm.org/route/v1/driving',
@@ -52,12 +53,13 @@ export interface LiveRouteResult {
 export async function geocodeAddress(query: string, signal?: AbortSignal, countryCode: string = APP_COUNTRY_CODE): Promise<GeocodedPlace[]> {
   try {
     const ccParam = countryCode ? `&countrycodes=${countryCode}` : '';
+    const country = getCountryByCode(countryCode);
     const url = `${NOMINATIM_BASE}?q=${encodeURIComponent(query)}&format=json${ccParam}&limit=8&addressdetails=1`;
-    logger.log('[Routing] Geocoding:', query);
+    logger.log('[Routing] Geocoding:', query, 'country:', countryCode);
 
     const response = await fetch(url, {
       headers: {
-        'User-Agent': APP_USER_AGENT,
+        'User-Agent': country.userAgent,
       },
       signal,
     });
@@ -145,7 +147,7 @@ export async function getRoute(
     logger.log('[Routing] Fetching route via', endpoint);
 
     const response = await fetch(url, {
-      headers: { 'User-Agent': 'DocksAndBridgesAU/1.0' },
+      headers: { 'User-Agent': APP_USER_AGENT },
       signal,
     });
 
@@ -158,7 +160,7 @@ export async function getRoute(
         logger.log('[Routing] Switching to fallback OSRM endpoint');
         const fallbackUrl = buildRouteUrl(getOsrmEndpoint(), origin, destination);
         const fallbackResp = await fetch(fallbackUrl, {
-          headers: { 'User-Agent': 'DocksAndBridgesAU/1.0' },
+          headers: { 'User-Agent': APP_USER_AGENT },
           signal,
         });
         if (!fallbackResp.ok) return null;

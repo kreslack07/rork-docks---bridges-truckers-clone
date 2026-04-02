@@ -1,3 +1,9 @@
-export const APP_COUNTRY_CODE = 'au';
-export const APP_COUNTRY_NAME = 'Australia';
-export const APP_USER_AGENT = 'TruckDockFinderAU/1.0';
+import { DEFAULT_COUNTRY_CODE, getCountryByCode } from '@/constants/countries';
+
+export const APP_DEFAULT_COUNTRY_CODE = DEFAULT_COUNTRY_CODE;
+export const APP_DEFAULT_COUNTRY_NAME = getCountryByCode(DEFAULT_COUNTRY_CODE).name;
+export const APP_DEFAULT_USER_AGENT = getCountryByCode(DEFAULT_COUNTRY_CODE).userAgent;
+
+export const APP_COUNTRY_CODE = APP_DEFAULT_COUNTRY_CODE;
+export const APP_COUNTRY_NAME = APP_DEFAULT_COUNTRY_NAME;
+export const APP_USER_AGENT = APP_DEFAULT_USER_AGENT;

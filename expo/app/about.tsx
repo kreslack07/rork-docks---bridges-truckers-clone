@@ -21,6 +21,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { ThemeColors } from '@/constants/colors';
 import ScreenErrorBoundary from '@/components/ScreenErrorBoundary';
 import { cachedStyles } from '@/utils/styleCache';
+import { useCountry } from '@/context/UserPreferencesContext';
 
 const APP_VERSION = '1.0.0';
 const BUILD_NUMBER = '1';
@@ -46,6 +47,7 @@ const CHANGELOG = [
 
 function AboutScreenContent() {
   const { colors } = useTheme();
+  const { countryConfig } = useCountry();
   const styles = cachedStyles(makeStyles, colors);
 
   return (
@@ -63,7 +65,7 @@ function AboutScreenContent() {
         <Text style={styles.appName}>Docks & Bridges Truckers</Text>
         <Text style={styles.versionText}>Version {APP_VERSION} ({BUILD_NUMBER})</Text>
         <Text style={styles.tagline}>
-          Australia's trusted clearance & dock companion for professional drivers
+          Your trusted clearance & dock companion for professional drivers
         </Text>
       </View>
 
@@ -147,7 +149,7 @@ function AboutScreenContent() {
       </View>
 
       <Text style={styles.copyrightText}>
-        Made for Australian truck drivers{'\n'}
+        Made for {countryConfig.demonym} truck drivers{'\n'}
         {'\u00A9'} 2026 Docks & Bridges Truckers
       </Text>
     </ScrollView>

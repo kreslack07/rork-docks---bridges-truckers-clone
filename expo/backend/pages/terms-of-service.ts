@@ -79,7 +79,7 @@ export const termsOfServiceHtml = `<!DOCTYPE html>
     <p>By downloading, installing, or using DOCKS &amp; BRIDGES, you agree to be bound by these Terms of Service. If you do not agree, do not use the app.</p>
 
     <h2>2. Description of Service</h2>
-    <p>This app provides truck and delivery vehicle drivers with route planning, dock finding, and height hazard awareness tools for driving in Australia. The app uses publicly available data sources and user-contributed reports.</p>
+    <p>This app provides truck and delivery vehicle drivers with route planning, dock finding, and height hazard awareness tools. The app uses publicly available data sources and user-contributed reports.</p>
 
     <h2>3. Disclaimer of Accuracy</h2>
     <p>IMPORTANT: While we strive to provide accurate data, clearance heights, dock locations, and route information may not always be up to date. Road conditions, construction, and temporary changes may affect accuracy.</p>
@@ -116,7 +116,7 @@ export const termsOfServiceHtml = `<!DOCTYPE html>
     <p>The app's design, code, and branding are protected by intellectual property laws. You may not copy, modify, distribute, or reverse-engineer any part of the app.</p>
 
     <h2>10. Governing Law</h2>
-    <p>These terms are governed by the laws of Australia. Any disputes arising from the use of this app shall be subject to the jurisdiction of Australian courts.</p>
+    <p>These terms are governed by applicable local laws. Any disputes arising from the use of this app shall be subject to the jurisdiction of the relevant local courts.</p>
 
     <h2>11. Changes to Terms</h2>
     <p>We reserve the right to modify these terms at any time. Continued use of the app after changes constitutes acceptance of the new terms.</p>
