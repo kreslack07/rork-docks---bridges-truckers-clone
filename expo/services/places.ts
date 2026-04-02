@@ -1,7 +1,8 @@
 import { Dock, BusinessCategory } from '@/types';
 import { throttledOverpassFetch } from '@/services/overpass-throttle';
 import { logger } from '@/utils/logger';
-import { APP_COUNTRY_NAME, APP_USER_AGENT } from '@/constants/app';
+import { APP_COUNTRY_CODE } from '@/constants/app';
+import { getCountryByCode } from '@/constants/countries';
 
 interface OverpassElement {
   type: string;
@@ -185,14 +186,14 @@ export async function searchDocksNearby(
 export async function searchDocksByQuery(
   query: string,
   signal?: AbortSignal,
-  countryName: string = APP_COUNTRY_NAME,
-  userAgent: string = APP_USER_AGENT,
+  countryCode: string = APP_COUNTRY_CODE,
 ): Promise<Dock[]> {
+  const country = getCountryByCode(countryCode);
   try {
-    logger.log('[Places] Text search:', query, 'country:', countryName);
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ', ' + countryName)}&format=json&limit=5&addressdetails=1`;
+    logger.log('[Places] Text search:', query, 'country:', country.name);
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ', ' + country.name)}&format=json&limit=5&addressdetails=1&countrycodes=${encodeURIComponent(countryCode)}`;
     const response = await fetch(url, {
-      headers: { 'User-Agent': userAgent },
+      headers: { 'User-Agent': country.userAgent },
       signal,
     });
     if (!response.ok) return [];
